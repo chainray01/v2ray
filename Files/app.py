@@ -108,7 +108,7 @@ def decode_links(dir_links):
                 if isinstance(data, list) and len(data) > 0:
                     commit_time = data[0]["commit"]["committer"]["date"]
                     commit_datetime = datetime.strptime(commit_time, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-                    if datetime.now(timezone.utc) - commit_datetime > timedelta(hours=48):
+                    if datetime.now(timezone.utc) - commit_datetime > timedelta(hours=24):
                         print(f"Skipping outdated link: {link}")
                         continue
 
@@ -188,6 +188,8 @@ def main():
         "https://raw.githubusercontent.com/Rayan-Config/C-Sub/refs/heads/main/configs/proxy.txt",
         "https://raw.githubusercontent.com/4n0nymou3/multi-proxy-config-fetcher/refs/heads/main/configs/proxy_configs.txt",
         "https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/Eternity.txt",
+        "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/ss.txt",
+        "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/vmess.txt",
         "https://raw.githubusercontent.com/MahsaNetConfigTopic/config/refs/heads/main/xray_final.txt"
     ]
 
