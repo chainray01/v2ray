@@ -3,22 +3,6 @@
 #subscription-userinfo: upload=29; download=12; total=10737418240000000; expire=2546249531
 #support-url: https://github.com/barry-far/V2ray-config
 #profile-web-page-url: https://github.com/barry-far/V2ray-config
-vless://491e4f76-42f0-43a7-a987-25072a68d5e4@hopeful-appointment.seotoolsforyou.co.uk:80?encryption=none&type=ws&path=%2f#%f0%9f%87%ba%f0%9f%87%b8%20US%2091
-
-vless://4ada616c-171a-42a1-9911-c92d59964c28@136.244.119.80:8443?path=%2FFree-VPN-CF-Geo-Project%2FFR5&security=tls&encryption=none&host=joss.krikkrik.tech&fp=randomized&type=ws&sni=joss.krikkrik.tech#%40v2FreeHub%20%F0%9F%87%AB%F0%9F%87%B7
-
-vless://4b9063e0-3288-44e9-9aac-80fbfce323a0@83.222.23.81:38065?security=reality&encryption=none&sni=yahoo.com&fp=chrome&pbk=dSSDPTK6AHfAdRAXD9i4rzqcNIY65RxlF25UyCKdiyo&sid=fa&type=tcp&path=%2f#%f0%9f%87%b0%f0%9f%87%bf%20KZ%202
-
-vless://4bb35928-40bb-4bf3-95f1-9efdc4169147@159.223.209.139:46964?security=none&encryption=none&headerType=none&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20ProxyCloud%20DO
-
-
-
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTo1MXlsb1FDOEQ5dzFXYWU3Rkh0STY1@135.225.124.80:48172#%F0%9F%87%B8%F0%9F%87%AA%20ProxyCloud%20Sweden
-
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTo1MXlsb1FDOEQ5dzFXYWU3Rkh0STY1@135.225.124.80:48172#%F0%9F%87%B8%F0%9F%87%AA%20Sweden%20%F0%9F%94%A5
-
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTo1MXlsb1FDOEQ5dzFXYWU3Rkh0STY1@4.223.100.248:48172#%F0%9F%87%B8%F0%9F%87%AA%20Sweden%20Z
-
 ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTo1MXlsb1FDOEQ5dzFXYWU3Rkh0STY1@azure-sto.edgeservers.org:48172#Server-1
 
 ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTo1MXlsb1FDOEQ5dzFXYWU3Rkh0STY1@azure-sto.edgeservers.org:48172#Server-2
