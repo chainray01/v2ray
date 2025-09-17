@@ -188,7 +188,6 @@ def main():
         "https://raw.githubusercontent.com/sarinaesmailzadeh/V2Hub/main/merged",
         "https://raw.githubusercontent.com/freev2rayconfig/V2RAY_SUBSCRIPTION_LINK/main/v2rayconfigs.txt",
         "https://raw.githubusercontent.com/Everyday-VPN/Everyday-VPN/main/subscription/main.txt",
-        "https://raw.githubusercontent.com/C4ssif3r/V2ray-sub/main/all.txt",
         "https://raw.githubusercontent.com/MahsaNetConfigTopic/config/refs/heads/main/xray_final.txt"
     ]
 
