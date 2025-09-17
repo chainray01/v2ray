@@ -1,4 +1,4 @@
-name: Update Configs
+name: Update Configs and Release
 permissions: write-all
 
 on:
@@ -42,10 +42,69 @@ jobs:
         python app.py
         python sort.py
 
+    - name: Prepare files for commit and release
+      run: |
+        # 检查 Sub1 文件是否存在
+        if [ -f "Files/Sub1" ]; then
+          echo "Sub1 file found, preparing for commit and release..."
+          
+          # 复制到 data 目录并重命名为 Sub1.txt（用于 raw.githubusercontent.com 访问）
+          mkdir -p data
+          cp Files/Sub1 data/Sub1.txt
+          
+          echo "sub1_exists=true" >> $GITHUB_ENV
+          echo "Files prepared successfully"
+        else
+          echo "sub1_exists=false" >> $GITHUB_ENV
+          echo "Sub1 file not found"
+        fi
+
+    - name: Create Release Tag
+      if: env.sub1_exists == 'true'
+      id: create_tag
+      run: |
+        # 选项1: 基于时间戳的标签
+        #TAG="release-$(date +'%Y%m%d-%H%M%S')"
+        TAG="release"
+        # 选项2: 基于commit SHA的标签（取消注释使用）
+        # TAG="release-${GITHUB_SHA:0:7}"
+        
+        # 选项3: 语义化版本（需要额外逻辑计算版本号）
+        # LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+        # TAG="v$(echo $LATEST_TAG | sed 's/v//' | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')"
+        
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git tag $TAG
+        git push origin $TAG
+
+    - name: Create Release with Sub1
+      if: env.sub1_exists == 'true'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.create_tag.outputs.tag }}
+        name: "Auto Release ${{ steps.create_tag.outputs.tag }}"
+        body: |
+          Automated release created by GitHub Actions
+          
+          Generated files:
+          - Sub1: Updated configuration file
+          - Sub1.txt: Available at raw.githubusercontent.com/chainray01/v2ray/main/data/Sub1.txt
+          
+          Timestamp: ${{ steps.create_tag.outputs.tag }}
+        files: |
+          Files/Sub1
+          data/Sub1.txt
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Commit and push changes
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        commit_message: "Updated by GitHub Actions"
+        commit_message: "Updated by GitHub Actions - ${{ steps.create_tag.outputs.tag }}"
         commit_user_name: "GitHub Actions"
         commit_user_email: "actions@github.com"
         branch: main
