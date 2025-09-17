@@ -49,27 +49,19 @@ jobs:
         echo "Running sort.py..."
         python sort.py
 
-    - name: Check for changes
-      id: verify-changed-files
+    - name: Check if data directory exists
+      id: check-data
       run: |
-        if [ -n "$(git status --porcelain)" ]; then
-          echo "changed=true" >> $GITHUB_OUTPUT
+        if [ -d "data" ] && [ "$(ls -A data)" ]; then
+          echo "data-exists=true" >> $GITHUB_OUTPUT
+          echo "✅ Data directory found with content"
         else
-          echo "changed=false" >> $GITHUB_OUTPUT
+          echo "data-exists=false" >> $GITHUB_OUTPUT
+          echo "⚠️ Data directory not found or empty"
         fi
 
-    - name: Commit and push changes to main
-      if: steps.verify-changed-files.outputs.changed == 'true'
-      uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        commit_message: "chore: auto-update configs [skip ci]"
-        commit_user_name: "github-actions[bot]"
-        commit_user_email: "github-actions[bot]@users.noreply.github.com"
-        branch: main
-        skip_dirty_check: true
-
     - name: Deploy data to links branch
-      if: steps.verify-changed-files.outputs.changed == 'true'
+      if: steps.check-data.outputs.data-exists == 'true'
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -82,8 +74,8 @@ jobs:
 
     - name: Summary
       run: |
-        if [ "${{ steps.verify-changed-files.outputs.changed }}" == "true" ]; then
-          echo "✅ Configuration files updated and data deployed to links branch successfully"
+        if [ "${{ steps.check-data.outputs.data-exists }}" == "true" ]; then
+          echo "✅ Data deployed to links branch successfully"
         else
-          echo "ℹ️ No changes detected in configuration files"
+          echo "ℹ️ No data directory found, skipping deployment"
         fi
