@@ -45,14 +45,14 @@ jobs:
     - name: Prepare files for commit and release
       run: |
         # 检查 Sub1 文件是否存在
-        if [ -f "data/Sub1.txt" ]; then
-          echo "Sub1 file found, preparing for commit and release..."
+        if [ -f "data/Sub1.txt" ] && [ -f "data/Sub2.txt" ] && [ -f "data/Sub3.txt" ] && [ -f "data/Sub4.txt" ] && [ -f "data/Sub5.txt" ] && [ -f "data/Sub6.txt" ] && [ -f "data/Sub7.txt" ] && [ -f "data/Sub8.txt" ]; then
+          echo "All Sub files found, preparing for commit and release..."
           
           echo "sub1_exists=true" >> $GITHUB_ENV
           echo "Files prepared successfully"
         else
           echo "sub1_exists=false" >> $GITHUB_ENV
-          echo "Sub1 file not found"
+          echo "One or more Sub files not found"
         fi
 
     - name: Create Release Tag
@@ -90,17 +90,17 @@ jobs:
           
           Timestamp: ${{ steps.create_tag.outputs.tag }}
         files: |
-          Files/Sub1
           data/Sub1.txt
+          data/Sub2.txt
+          data/Sub3.txt
+          data/Sub4.txt
+          data/Sub5.txt
+          data/Sub6.txt
+          data/Sub7.txt
+          data/Sub8.txt
         draft: false
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Commit and push changes
-      uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        commit_message: "Updated by GitHub Actions - ${{ steps.create_tag.outputs.tag }}"
-        commit_user_name: "GitHub Actions"
-        commit_user_email: "actions@github.com"
-        branch: main
+    
