@@ -3,6 +3,7 @@
 #subscription-userinfo: upload=29; download=12; total=10737418240000000; expire=2546249531
 #support-url: https://github.com/barry-far/V2ray-config
 #profile-web-page-url: https://github.com/barry-far/V2ray-config
+vless://561623c8-4983-44d3-a6ef-92b803a74ee8@obedient-menu.seotoolsforyou.co.uk:80?path=/?ed=2048@Dropcube--@Dropcube--@Dropcube--@Dropcube--@Dropcube--@Dropcube&security=&encryption=none&fp=chrome&type=ws#@Dropcube⚡❤️‍🔥
 vless://561623c8-4983-44d3-a6ef-92b803a74ee8@obedient-menu.seotoolsforyou.co.uk:80?path=/?ed=2048@V2Gatee--V2Gatee--V2Gatee--V2Gatee-V2Gatee--V2Gatee--V2Gatee--V2Gatee--V2Gatee--V2Gatee--V2Gatee--V2Gatee&security=none&encryption=none&fp=chrome&type=ws#𝗝𝗼𝗶𝗻 ➠ 𝐓𝐞𝐥𝐞𝐠𝐫𝐚𝐦: @V2Gatee
 vless://561623c8-4983-44d3-a6ef-92b803a74ee8@obedient-menu.seotoolsforyou.co.uk:80?path=/?ed=2048@V2Gatee--V2Gatee--V2Gatee--V2Gatee-V2Gatee--V2Gatee--V2Gatee--V2Gatee--V2Gatee--V2Gatee--V2Gatee--V2Gatee--V2Gatee--V2Gatee--V2Gatee&security=none&encryption=none&fp=chrome&type=ws#𝗝𝗼𝗶𝗻 ➠ 𝐓𝐞𝐥𝐞𝐠𝐫𝐚𝐦: @V2Gatee
 vless://568279ce-dd78-4f33-9e5c-64b18c5505db@151.101.123.159:80?security=&type=ws&path=/olem/ws?ed=2560&host=foffmelo.com&encryption=none#@awlix_ir
@@ -502,4 +503,3 @@ vless://747d4612-b3e5-4165-879a-42d861e4c4b7@65.109.183.203:10000?path=/&securit
 vless://74e7c336-abf1-44ea-bffa-8a419224ee7a@91.107.245.212:33140?security=reality&encryption=none&pbk=BTsXykRA0mUv-PP6ncIQqjBMz_HRueLob9CNHT9QpGM&headerType=none&fp=chrome&spx=/&type=tcp&sni=addons.mozilla.org&sid=53#🇩🇪@FreakConfig
 vless://74e7c336-abf1-44ea-bffa-8a419224ee7a@91.107.245.212:33140?security=reality&encryption=none&pbk=BTsXykRA0mUv-PP6ncIQqjBMz_HRueLob9CNHT9QpGM&host=/?BIA_TELEGRAM@MARAMBASHI_MARAMBASHI_MARAMBASHI&headerType=none&fp=chrome&spx=/&type=tcp&sni=addons.mozilla.org&sid=53#💎کانفیگ های بیشتر در چنل تلگرام💎 Config_Rayegan@
 vless://74e96ccd-d0c2-45f9-8dd4-486b6a93fa5b@91.107.170.231:2053?security=none&encryption=none&host=bmw.com&headerType=http&type=tcp#Channel-@vmesskhodam
-vless://7582fcae-775d-48bf-8f71-b733c98d5a97@172.66.40.99:2052?type=ws&path=/@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet--@Maznet&host=υρρσят-多言語-دعم.snaptripupport.space.&security=none#@Maznet-46167-2
