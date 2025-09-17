@@ -1,45 +1,89 @@
 name: Update Configs
-permissions: write-all
 
+permissions:
+  contents: write
+  
 on:
   push:
     branches:
       - main
   schedule:
     - cron: "0 */1 * * *"
+  workflow_dispatch:
 
 jobs:
-  build:
+  update-configs:
     runs-on: ubuntu-latest
-
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        persist-credentials: true
+        token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Set up Python (latest available)
+    - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '*'
+        python-version: '3.11'
 
-
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('Files/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
 
     - name: Install dependencies
       working-directory: Files
-      run: pip install -r requirements.txt
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
 
     - name: Run Python scripts
       working-directory: Files
       run: |
+        echo "Running app.py..."
         python app.py
+        echo "Running sort.py..."
         python sort.py
 
-    - name: Commit and push changes
+    - name: Check for changes
+      id: verify-changed-files
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+        else
+          echo "changed=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Commit and push changes to main
+      if: steps.verify-changed-files.outputs.changed == 'true'
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        commit_message: "Updated by GitHub Actions"
-        commit_user_name: "GitHub Actions"
-        commit_user_email: "actions@github.com"
+        commit_message: "chore: auto-update configs [skip ci]"
+        commit_user_name: "github-actions[bot]"
+        commit_user_email: "github-actions[bot]@users.noreply.github.com"
         branch: main
+        skip_dirty_check: true
+
+    - name: Deploy data to links branch
+      if: steps.verify-changed-files.outputs.changed == 'true'
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./data
+        publish_branch: links
+        force_orphan: true
+        commit_message: "chore: update data from main branch"
+        user_name: "github-actions[bot]"
+        user_email: "github-actions[bot]@users.noreply.github.com"
+
+    - name: Summary
+      run: |
+        if [ "${{ steps.verify-changed-files.outputs.changed }}" == "true" ]; then
+          echo "✅ Configuration files updated and data deployed to links branch successfully"
+        else
+          echo "ℹ️ No changes detected in configuration files"
+        fi
