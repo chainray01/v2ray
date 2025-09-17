@@ -17,11 +17,7 @@ trojan_file = os.path.join(ptt, 'Splitted-By-Protocol/trojan.txt')
 ss_file = os.path.join(ptt, 'Splitted-By-Protocol/ss.txt')
 ssr_file = os.path.join(ptt, 'Splitted-By-Protocol/ssr.txt')
 
-open(vmess_file, "w").close()
-open(vless_file, "w").close()
-open(trojan_file, "w").close()
-open(ss_file, "w").close()
-open(ssr_file, "w").close()
+
 
 vmess = ""
 vless = ""
