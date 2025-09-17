@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 TIMEOUT = 15  # seconds
 
 # Define the fixed text for the initial configuration
-fixed_text = f"""#profile-title: base64:8J+GkyBHaXRodWIgfCBCYXJyeS1mYXIg8J+ltw==
+fixed_text = """#profile-title: base64:8J+GkyBHaXRodWIgfCBCYXJyeS1mYXIg8J+ltw==
 #profile-update-interval: 1
 #subscription-userinfo: upload=29; download=12; total=10737418240000000; expire=2546249531
 #support-url: https://github.com/barry-far/V2ray-config
@@ -31,7 +31,7 @@ def decode_base64(encoded):
 
 
 # Function to decode base64-encoded links with a timeout (返回带时间戳的数据)
-def decode_links(links):
+def decode_b64_links(links):
     decoded_data_with_time = []
     for link in links:
         try:
@@ -79,7 +79,7 @@ def decode_links(links):
 
 
 # Function to decode directory links with a timeout (返回带时间戳的数据)
-def decode_dir_links(dir_links):
+def decode_links(dir_links):
     decoded_dir_links_with_time = []
     for link in dir_links:
         try:
@@ -172,7 +172,7 @@ def main():
     print("Starting to fetch and process configs...")
 
     protocols = ["vmess", "vless", "trojan", "ss", "ssr", "hy2", "tuic", "warp://"]
-    links = [
+    base64_links = [
         "https://raw.githubusercontent.com/ALIILAPRO/v2rayNG-Config/main/sub.txt",
         "https://raw.githubusercontent.com/mfuu/v2ray/master/v2ray",
         "https://raw.githubusercontent.com/ts-sf/fly/main/v2",
@@ -182,6 +182,7 @@ def main():
         "https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/refs/heads/main/mtn/sub_2.txt",
         "https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/refs/heads/main/mtn/sub_3.txt",
         "https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/refs/heads/main/mtn/sub_4.txt",
+        "https://raw.githubusercontent.com/MatinGhanbari/v2ray-configs/main/subscriptions/v2ray/super-sub.txt",
         "https://raw.githubusercontent.com/yebekhe/vpn-fail/refs/heads/main/sub-link",
         "https://raw.githubusercontent.com/Surfboardv2ray/TGParse/main/splitted/mixed"
     ]
@@ -189,24 +190,19 @@ def main():
         "https://raw.githubusercontent.com/itsyebekhe/PSG/main/lite/subscriptions/xray/normal/mix",
         "https://raw.githubusercontent.com/HosseinKoofi/GO_V2rayCollector/main/mixed_iran.txt",
         "https://raw.githubusercontent.com/arshiacomplus/v2rayExtractor/refs/heads/main/mix/sub.html",
-        "https://raw.githubusercontent.com/IranianCypherpunks/sub/main/config",
         "https://raw.githubusercontent.com/Rayan-Config/C-Sub/refs/heads/main/configs/proxy.txt",
         "https://raw.githubusercontent.com/4n0nymou3/multi-proxy-config-fetcher/refs/heads/main/configs/proxy_configs.txt",
-        "https://raw.githubusercontent.com/sashalsk/V2Ray/main/V2Config",
         "https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/Eternity.txt",
-        "https://raw.githubusercontent.com/itsyebekhe/HiN-VPN/main/subscription/normal/mix",
-        "https://raw.githubusercontent.com/sarinaesmailzadeh/V2Hub/main/merged",
-        "https://raw.githubusercontent.com/freev2rayconfig/V2RAY_SUBSCRIPTION_LINK/main/v2rayconfigs.txt",
         "https://raw.githubusercontent.com/Everyday-VPN/Everyday-VPN/main/subscription/main.txt",
         "https://raw.githubusercontent.com/MahsaNetConfigTopic/config/refs/heads/main/xray_final.txt"
     ]
 
     print("Fetching base64 encoded configs...")
-    decoded_links_with_time = decode_links(links)
+    decoded_links_with_time = decode_b64_links(base64_links)
     print(f"Decoded {len(decoded_links_with_time)} base64 sources")
 
     print("Fetching direct text configs...")
-    decoded_dir_links_with_time = decode_dir_links(dir_links)
+    decoded_dir_links_with_time = decode_links(dir_links)
     print(f"Decoded {len(decoded_dir_links_with_time)} direct text sources")
 
     print("Combining and sorting configs by time...")
