@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 TIMEOUT = 15  # seconds
 
 # Define the fixed text for the initial configuration
-fixed_text = """#profile-title: base64:8J+GkyBHaXRodWIgfCBCYXJyeS1mYXIg8J+ltw==
+fixed_text = f"""#profile-title: base64:8J+GkyBHaXRodWIgfCBCYXJyeS1mYXIg8J+ltw==
 #profile-update-interval: 1
 #subscription-userinfo: upload=29; download=12; total=10737418240000000; expire=2546249531
 #support-url: https://github.com/barry-far/V2ray-config
@@ -70,13 +70,6 @@ def decode_links(links):
                 encoded_bytes = response.content
                 decoded_text = decode_base64(encoded_bytes)
                 decoded_data_with_time.append((commit_datetime, decoded_text))
-            else:
-                # If no commit info, treat as old data
-                response = requests.get(link, timeout=TIMEOUT)
-                response.raise_for_status()
-                encoded_bytes = response.content
-                decoded_text = decode_base64(encoded_bytes)
-                decoded_data_with_time.append((datetime.min.replace(tzinfo=timezone.utc), decoded_text))
         except (requests.RequestException, KeyError, IndexError) as e:
             print(f"Error processing link {link}: {e}")
             continue
