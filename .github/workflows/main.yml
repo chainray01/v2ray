@@ -43,4 +43,3 @@ jobs:
         commit_user_name: "GitHub Actions"
         commit_user_email: "actions@github.com"
         branch: main
-        file_pattern: "Sub1.txt Sub2.txt Sub3.txt Sub4.txt Sub5.txt Sub6.txt Sub7.txt Sub8.txt"
