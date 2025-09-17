@@ -30,9 +30,9 @@ def decode_base64(encoded):
     return decoded
 
 
-# Function to decode base64-encoded links with a timeout
+# Function to decode base64-encoded links with a timeout (返回带时间戳的数据)
 def decode_links(links):
-    decoded_data = []
+    decoded_data_with_time = []
     for link in links:
         try:
             # Parse GitHub link to extract owner, repo, and file_path
@@ -63,23 +63,34 @@ def decode_links(links):
                 if datetime.now(timezone.utc) - commit_datetime > timedelta(hours=48):
                     print(f"Skipping outdated link: {link}")
                     continue
-                    # Fetch and decode the link content
-            response = requests.get(link, timeout=TIMEOUT)
-            response.raise_for_status()
-            encoded_bytes = response.content
-            decoded_text = decode_base64(encoded_bytes)
-            decoded_data.append(decoded_text)
+
+                # Fetch and decode the link content
+                response = requests.get(link, timeout=TIMEOUT)
+                response.raise_for_status()
+                encoded_bytes = response.content
+                decoded_text = decode_base64(encoded_bytes)
+                decoded_data_with_time.append((commit_datetime, decoded_text))
+            else:
+                # If no commit info, treat as old data
+                response = requests.get(link, timeout=TIMEOUT)
+                response.raise_for_status()
+                encoded_bytes = response.content
+                decoded_text = decode_base64(encoded_bytes)
+                decoded_data_with_time.append((datetime.min.replace(tzinfo=timezone.utc), decoded_text))
         except (requests.RequestException, KeyError, IndexError) as e:
             print(f"Error processing link {link}: {e}")
             continue
-    return decoded_data
+
+    # 返回带时间戳的数据供全局排序
+    return decoded_data_with_time
 
 
-# Function to decode directory links with a timeout
+# Function to decode directory links with a timeout (返回带时间戳的数据)
 def decode_dir_links(dir_links):
-    decoded_dir_links = []
+    decoded_dir_links_with_time = []
     for link in dir_links:
         try:
+            commit_datetime = datetime.min.replace(tzinfo=timezone.utc)
             # Parse GitHub link to extract owner, repo, and file_path
             parts = link.split("/")
             if "githubusercontent.com" in link and len(parts) > 5:
@@ -110,11 +121,13 @@ def decode_dir_links(dir_links):
 
             response = requests.get(link, timeout=TIMEOUT)
             decoded_text = response.text
-            decoded_dir_links.append(decoded_text)
+            decoded_dir_links_with_time.append((commit_datetime, decoded_text))
         except (requests.RequestException, KeyError, IndexError) as e:
             print(f"Error processing dir link {link}: {e}")
             continue
-    return decoded_dir_links
+
+    # 返回带时间戳的数据供全局排序
+    return decoded_dir_links_with_time
 
 
 # Filter function to select lines based on specified protocols and remove duplicates (only for config lines)
@@ -192,15 +205,22 @@ def main():
     ]
 
     print("Fetching base64 encoded configs...")
-    decoded_links = decode_links(links)
-    print(f"Decoded {len(decoded_links)} base64 sources")
+    decoded_links_with_time = decode_links(links)
+    print(f"Decoded {len(decoded_links_with_time)} base64 sources")
 
     print("Fetching direct text configs...")
-    decoded_dir_links = decode_dir_links(dir_links)
-    print(f"Decoded {len(decoded_dir_links)} direct text sources")
+    decoded_dir_links_with_time = decode_dir_links(dir_links)
+    print(f"Decoded {len(decoded_dir_links_with_time)} direct text sources")
 
-    print("Combining and filtering configs...")
-    combined_data = decoded_links + decoded_dir_links
+    print("Combining and sorting configs by time...")
+    # 合并所有带时间戳的数据
+    all_data_with_time = decoded_links_with_time + decoded_dir_links_with_time
+    # 按时间戳降序排序（最新的在前）
+    all_data_with_time.sort(key=lambda x: x[0], reverse=True)
+    # 提取排序后的数据内容
+    combined_data = [data for (_, data) in all_data_with_time]
+
+    print("Filtering configs...")
     merged_configs = filter_for_protocols(combined_data, protocols)
     print(f"Found {len(merged_configs)} unique configs after filtering")
     if len(merged_configs) < 1:
