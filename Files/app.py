@@ -1,3 +1,7 @@
+import json
+import re
+from urllib.parse import urlparse
+
 import pybase64
 import base64
 import requests
@@ -127,21 +131,59 @@ def decode_links(dir_links):
 def filter_for_protocols(data, protocols):
     filtered_data = []
     seen_configs = set()
-    header_lines = {"#profile-title", "#profile-update-interval", "#subscription-userinfo", "#support-url", "#profile-web-page-url"}
+    seen_hosts = set()
+    header_lines = {"#profile-title", "#profile-update-interval", "#subscription-userinfo", "#support-url",
+                    "#profile-web-page-url"}
 
-    # Process each decoded content
+    def extract_host_port(line):
+        try:
+            # vmess:// 特殊处理（base64 JSON）
+            if line.startswith("vmess://"):
+                raw = line[8:].strip()
+                try:
+                    padded = raw + "=" * (-len(raw) % 4)  # 补齐 base64
+                    decoded_json = base64.b64decode(padded).decode("utf-8")
+                    obj = json.loads(decoded_json)
+                    host = obj.get("add")
+                    port = obj.get("port")
+                    if host and port:
+                        return f"{host}:{port}"
+                except Exception:
+                    return None
+
+            # 通用协议（ss, vless, trojan, hysteria2, tuic, hy2...）
+            if line.startswith(("ss://", "ssr://", "vless://", "trojan://", "hysteria2://", "hy2://", "tuic://")):
+                parsed = urlparse(line)
+                if parsed.hostname and parsed.port:
+                    return f"{parsed.hostname}:{parsed.port}"
+
+            # 兜底正则匹配 @host:port
+            match = re.search(r'@([\w\.\-]+):(\d+)', line)
+            if match:
+                return f"{match.group(1)}:{match.group(2)}"
+            return None
+        except Exception:
+            return None
+
+    # 逐条数据处理
     for content in data:
-        if content and content.strip():  # Skip empty content
+        if content and content.strip():
             lines = content.strip().split('\n')
             for line in lines:
                 line = line.strip()
-                if line.startswith('#') or not line:
-                    # Skip header lines to avoid duplication
+                if not line:
+                    continue
+                if line.startswith('#'):
+                    # 跳过重复 header 行
                     if any(header in line for header in header_lines):
                         continue
-                    # Always keep other comment/metadata/empty lines
                     filtered_data.append(line)
                 elif any(protocol in line for protocol in protocols):
+                    host_port = extract_host_port(line)
+                    if host_port:
+                        if host_port in seen_hosts:
+                            continue  # 已存在，跳过
+                        seen_hosts.add(host_port)
                     if line not in seen_configs:
                         filtered_data.append(line)
                         seen_configs.add(line)
