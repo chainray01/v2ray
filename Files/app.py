@@ -127,6 +127,7 @@ def decode_dir_links(dir_links):
 def filter_for_protocols(data, protocols):
     filtered_data = []
     seen_configs = set()
+    header_lines = {"#profile-title", "#profile-update-interval", "#subscription-userinfo", "#support-url", "#profile-web-page-url"}
 
     # Process each decoded content
     for content in data:
@@ -135,7 +136,10 @@ def filter_for_protocols(data, protocols):
             for line in lines:
                 line = line.strip()
                 if line.startswith('#') or not line:
-                    # Always keep comment/metadata/empty lines
+                    # Skip header lines to avoid duplication
+                    if any(header in line for header in header_lines):
+                        continue
+                    # Always keep other comment/metadata/empty lines
                     filtered_data.append(line)
                 elif any(protocol in line for protocol in protocols):
                     if line not in seen_configs:
