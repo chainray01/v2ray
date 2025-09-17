@@ -43,13 +43,9 @@ jobs:
         python sort.py
 
     - name: Commit and push changes
-      uses: EndBug/add-and-commit@v9
+      uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        author_name: "GitHub Actions"
-        author_email: "actions@github.com"
-        message: "Updated by GitHub Actions"
-        add: "."
-        pull: "NO-PULL"
-        push: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        commit_message: "Updated by GitHub Actions"
+        commit_user_name: "GitHub Actions"
+        commit_user_email: "actions@github.com"
+        branch: main
