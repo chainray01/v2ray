@@ -1,4 +1,4 @@
-name: Update Configs and Release
+name: Update Configs
 permissions: write-all
 
 on:
@@ -42,114 +42,11 @@ jobs:
         python app.py
         python sort.py
 
-    - name: Prepare files for commit and release
-      run: |
-        # 检查 Sub1 文件是否存在
-        if [ -f "data/Sub1.txt" ] && [ -f "data/Sub2.txt" ] && [ -f "data/Sub3.txt" ] && [ -f "data/Sub4.txt" ] && [ -f "data/Sub5.txt" ] && [ -f "data/Sub6.txt" ] && [ -f "data/Sub7.txt" ] && [ -f "data/Sub8.txt" ]; then
-          echo "All Sub files found, preparing for commit and release..."
-          
-          echo "sub1_exists=true" >> $GITHUB_ENV
-          echo "Files prepared successfully"
-        else
-          echo "sub1_exists=false" >> $GITHUB_ENV
-          echo "One or more Sub files not found"
-        fi
-
-    - name: Delete Existing Release
-      if: env.sub1_exists == 'true'
-      uses: actions/github-script@v6
+    - name: Commit and push changes
+      uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        script: |
-          const releases = await github.rest.repos.listReleases({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-          });
-          for (const release of releases.data) {
-            if (release.tag_name === 'release') {
-              await github.rest.repos.deleteRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                release_id: release.id,
-              });
-              await github.rest.git.deleteRef({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: `tags/${release.tag_name}`,
-              });
-            }
-          }
-
-    - name: Delete Existing Release and Tags
-      if: env.sub1_exists == 'true'
-      uses: actions/github-script@v6
-      with:
-        script: |
-          // 删除所有 Release
-          const releases = await github.rest.repos.listReleases({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-          });
-          for (const release of releases.data) {
-            await github.rest.repos.deleteRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: release.id,
-            });
-          }
-          
-          // 删除所有标签
-          const tags = await github.rest.git.listRefs({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            ref: 'tags/',
-          });
-          for (const tag of tags.data) {
-            await github.rest.git.deleteRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: tag.ref,
-            });
-          }
-
-    - name: Create Release Tag
-      if: env.sub1_exists == 'true'
-      id: create_tag
-      run: |
-        # 选项1: 基于时间戳的标签
-        TAG="release"
-        
-        echo "tag=$TAG" >> $GITHUB_OUTPUT
-        git config user.name "GitHub Actions"
-        git config user.email "actions@github.com"
-        git tag $TAG
-        git push origin $TAG
-
-    - name: Create Release with Sub1
-      if: env.sub1_exists == 'true'
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ steps.create_tag.outputs.tag }}
-        name: "Auto Release ${{ steps.create_tag.outputs.tag }}"
-        body: |
-          Automated release created by GitHub Actions
-          
-          Generated files:
-          - Sub1: Updated configuration file
-          - Sub1.txt: Available at raw.githubusercontent.com/chainray01/v2ray/main/data/Sub1.txt
-          
-          Timestamp: ${{ steps.create_tag.outputs.tag }}
-        files: |
-          data/Sub1.txt
-          data/Sub2.txt
-          data/Sub3.txt
-          data/Sub4.txt
-          data/Sub5.txt
-          data/Sub6.txt
-          data/Sub7.txt
-          data/Sub8.txt
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    
+        commit_message: "Updated by GitHub Actions"
+        commit_user_name: "GitHub Actions"
+        commit_user_email: "actions@github.com"
+        branch: main
+        file_pattern: "Sub1.txt Sub2.txt Sub3.txt Sub4.txt Sub5.txt Sub6.txt Sub7.txt Sub8.txt"
