@@ -10,12 +10,12 @@ fixed_text = """#profile-title: base64:8J+GkyBHaXRodWIgfCBCYXJyeS1mYXIg8J+ltw==
 #profile-web-page-url: https://github.com/barry-far/V2ray-config
 """
 
-ptt = os.path.abspath(os.path.join(os.getcwd(), '..'))
-vmess_file = os.path.join(ptt, 'Splitted-By-Protocol/vmess.txt')
-vless_file = os.path.join(ptt, 'Splitted-By-Protocol/vless.txt')
-trojan_file = os.path.join(ptt, 'Splitted-By-Protocol/trojan.txt')
-ss_file = os.path.join(ptt, 'Splitted-By-Protocol/ss.txt')
-ssr_file = os.path.join(ptt, 'Splitted-By-Protocol/ssr.txt')
+ptt = os.path.abspath(os.path.join(os.getcwd(), '..', 'data'))
+vmess_file = os.path.join(ptt, 'vmess.txt')
+vless_file = os.path.join(ptt, 'vless.txt')
+trojan_file = os.path.join(ptt, 'trojan.txt')
+ss_file = os.path.join(ptt, 'ss.txt')
+ssr_file = os.path.join(ptt, 'ssr.txt')
 
 
 
