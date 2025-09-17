@@ -79,19 +79,44 @@ jobs:
             }
           }
 
+    - name: Delete Existing Release and Tags
+      if: env.sub1_exists == 'true'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          // 删除所有 Release
+          const releases = await github.rest.repos.listReleases({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+          });
+          for (const release of releases.data) {
+            await github.rest.repos.deleteRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.id,
+            });
+          }
+          
+          // 删除所有标签
+          const tags = await github.rest.git.listRefs({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: 'tags/',
+          });
+          for (const tag of tags.data) {
+            await github.rest.git.deleteRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: tag.ref,
+            });
+          }
+
     - name: Create Release Tag
       if: env.sub1_exists == 'true'
       id: create_tag
       run: |
         # 选项1: 基于时间戳的标签
-        #TAG="release-$(date +'%Y%m%d-%H%M%S')"
         TAG="release"
-        # 选项2: 基于commit SHA的标签（取消注释使用）
-        # TAG="release-${GITHUB_SHA:0:7}"
-        
-        # 选项3: 语义化版本（需要额外逻辑计算版本号）
-        # LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-        # TAG="v$(echo $LATEST_TAG | sed 's/v//' | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')"
         
         echo "tag=$TAG" >> $GITHUB_OUTPUT
         git config user.name "GitHub Actions"
