@@ -14,15 +14,23 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         persist-credentials: true
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
+    - name: Set up Python (latest available)
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '*'
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('Files/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
 
     - name: Install dependencies
       working-directory: Files
@@ -35,7 +43,7 @@ jobs:
         python sort.py
 
     - name: Commit and push changes
-      uses: EndBug/add-and-commit@v7
+      uses: EndBug/add-and-commit@v9
       with:
         author_name: "GitHub Actions"
         author_email: "actions@github.com"
