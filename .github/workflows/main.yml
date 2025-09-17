@@ -45,12 +45,8 @@ jobs:
     - name: Prepare files for commit and release
       run: |
         # 检查 Sub1 文件是否存在
-        if [ -f "Files/Sub1" ]; then
+        if [ -f "data/Sub1.txt" ]; then
           echo "Sub1 file found, preparing for commit and release..."
-          
-          # 复制到 data 目录并重命名为 Sub1.txt（用于 raw.githubusercontent.com 访问）
-          mkdir -p data
-          cp Files/Sub1 data/Sub1.txt
           
           echo "sub1_exists=true" >> $GITHUB_ENV
           echo "Files prepared successfully"
