@@ -11,10 +11,10 @@ from datetime import timezone
 from datetime import datetime, timedelta
 
 # Define a fixed timeout for HTTP requests
-TIMEOUT = 15  # seconds
+REQUEST_TIMEOUT = 15  # seconds
 
 # Define the fixed text for the initial configuration
-fixed_text = """#profile-title: base64:8J+GkyBHaXRodWIgfCBCYXJyeS1mYXIg8J+ltw==
+DEFAULT_SUBSCRIPTION_HEADER = """#profile-title: base64:8J+GkyBHaXRodWIgfCBCYXJyeS1mYXIg8J+ltw==
 #profile-update-interval: 1
 #subscription-userinfo: upload=29; download=12; total=10737418240000000; expire=2546249531
 #support-url: https://github.com/barry-far/V2ray-config
@@ -23,27 +23,27 @@ fixed_text = """#profile-title: base64:8J+GkyBHaXRodWIgfCBCYXJyeS1mYXIg8J+ltw==
 
 
 # Base64 decoding function
-def decode_base64(encoded):
-    decoded = ""
+def decode_base64_content(encoded_data):
+    decoded_content = ""
     for encoding in ["utf-8", "iso-8859-1"]:
         try:
-            decoded = pybase64.b64decode(encoded + b"=" * (-len(encoded) % 4)).decode(encoding)
+            decoded_content = pybase64.b64decode(encoded_data + b"=" * (-len(encoded_data) % 4)).decode(encoding)
             break
         except (UnicodeDecodeError, binascii.Error):
             pass
-    return decoded
+    return decoded_content
 
 
 # Function to decode base64-encoded links with a timeout (返回带时间戳的数据)
-def decode_b64_links(links):
-    decoded_data_with_time = []
-    for link in links:
+def fetch_and_decode_base64_sources(base64_source_urls):
+    decoded_sources_with_timestamp = []
+    for source_url in base64_source_urls:
         try:
             # Parse GitHub link to extract owner, repo, and file_path
-            parts = link.split("/")
-            owner, repo = parts[3], parts[4]
+            url_parts = source_url.split("/")
+            repo_owner, repo_name = url_parts[3], url_parts[4]
             # Remove 'master', 'main', or 'refs/heads/main' from file_path if present
-            file_path_parts = parts[5:]
+            file_path_parts = url_parts[5:]
             if file_path_parts and file_path_parts[0] in ["master", "main"]:
                 file_path_parts = file_path_parts[1:]
             elif file_path_parts[:3] == ["refs", "heads", "main"]:
@@ -51,147 +51,150 @@ def decode_b64_links(links):
             file_path = "/".join(file_path_parts)
 
             # Check if the link is updated within the last 48 hours
-            url = f"https://api.github.com/repos/{owner}/{repo}/commits"
-            params = {"path": file_path, "page": 1, "per_page": 1}
-            headers = {
+            github_api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/commits"
+            api_params = {"path": file_path, "page": 1, "per_page": 1}
+            request_headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
                 "Accept": "application/vnd.github.v3+json"
             }
-            res = requests.get(url, params=params, headers=headers, timeout=TIMEOUT)
-            res.raise_for_status()
-            data = res.json()
+            api_response = requests.get(github_api_url, params=api_params, headers=request_headers,
+                                        timeout=REQUEST_TIMEOUT)
+            api_response.raise_for_status()
+            commit_data = api_response.json()
 
-            if isinstance(data, list) and len(data) > 0:
-                commit_time = data[0]["commit"]["committer"]["date"]
-                commit_datetime = datetime.strptime(commit_time, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-                if datetime.now(timezone.utc) - commit_datetime > timedelta(hours=48):
-                    print(f"Skipping outdated link: {link}")
+            if isinstance(commit_data, list) and len(commit_data) > 0:
+                last_commit_time = commit_data[0]["commit"]["committer"]["date"]
+                last_commit_datetime = datetime.strptime(last_commit_time, "%Y-%m-%dT%H:%M:%SZ").replace(
+                    tzinfo=timezone.utc)
+                if datetime.now(timezone.utc) - last_commit_datetime > timedelta(hours=48):
+                    print(f"Skipping outdated source: {source_url}")
                     continue
 
                 # Fetch and decode the link content
-                response = requests.get(link, timeout=TIMEOUT)
-                response.raise_for_status()
-                encoded_bytes = response.content
-                decoded_text = decode_base64(encoded_bytes)
-                decoded_data_with_time.append((commit_datetime, decoded_text))
+                content_response = requests.get(source_url, timeout=REQUEST_TIMEOUT)
+                content_response.raise_for_status()
+                encoded_content = content_response.content
+                decoded_content = decode_base64_content(encoded_content)
+                decoded_sources_with_timestamp.append((last_commit_datetime, decoded_content))
         except (requests.RequestException, KeyError, IndexError) as e:
-            print(f"Error processing link {link}: {e}")
+            print(f"Error processing base64 source {source_url}: {e}")
             continue
 
-    # 返回带时间戳的数据供全局排序
-    return decoded_data_with_time
+    return decoded_sources_with_timestamp
 
 
 # Function to decode directory links with a timeout (返回带时间戳的数据)
-def decode_links(dir_links):
-    decoded_dir_links_with_time = []
-    for link in dir_links:
+def fetch_plain_text_sources(plain_text_source_urls):
+    decoded_sources_with_timestamp = []
+    for source_url in plain_text_source_urls:
         try:
-            commit_datetime = datetime.min.replace(tzinfo=timezone.utc)
+            last_commit_datetime = datetime.min.replace(tzinfo=timezone.utc)
             # Parse GitHub link to extract owner, repo, and file_path
-            parts = link.split("/")
-            if "githubusercontent.com" in link and len(parts) > 5:
-                owner, repo = parts[3], parts[4]
-                file_path_parts = parts[5:]
+            url_parts = source_url.split("/")
+            if "githubusercontent.com" in source_url and len(url_parts) > 5:
+                repo_owner, repo_name = url_parts[3], url_parts[4]
+                file_path_parts = url_parts[5:]
                 if file_path_parts and file_path_parts[0] in ["master", "main"]:
                     file_path_parts = file_path_parts[1:]
                 elif file_path_parts[:3] == ["refs", "heads", "main"]:
                     file_path_parts = file_path_parts[3:]
                 file_path = "/".join(file_path_parts)
 
-                # Check if the link is updated within the last 48 hours
-                url = f"https://api.github.com/repos/{owner}/{repo}/commits"
-                params = {"path": file_path, "page": 1, "per_page": 1}
-                headers = {
+                # Check if the link is updated within the last 24 hours
+                github_api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/commits"
+                api_params = {"path": file_path, "page": 1, "per_page": 1}
+                request_headers = {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
                     "Accept": "application/vnd.github.v3+json"
                 }
-                res = requests.get(url, params=params, headers=headers, timeout=TIMEOUT)
-                res.raise_for_status()
-                data = res.json()
-                if isinstance(data, list) and len(data) > 0:
-                    commit_time = data[0]["commit"]["committer"]["date"]
-                    commit_datetime = datetime.strptime(commit_time, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-                    if datetime.now(timezone.utc) - commit_datetime > timedelta(hours=24):
-                        print(f"Skipping outdated link: {link}")
+                api_response = requests.get(github_api_url, params=api_params, headers=request_headers,
+                                            timeout=REQUEST_TIMEOUT)
+                api_response.raise_for_status()
+                commit_data = api_response.json()
+                if isinstance(commit_data, list) and len(commit_data) > 0:
+                    last_commit_time = commit_data[0]["commit"]["committer"]["date"]
+                    last_commit_datetime = datetime.strptime(last_commit_time, "%Y-%m-%dT%H:%M:%SZ").replace(
+                        tzinfo=timezone.utc)
+                    if datetime.now(timezone.utc) - last_commit_datetime > timedelta(hours=24):
+                        print(f"Skipping outdated source: {source_url}")
                         continue
 
-            response = requests.get(link, timeout=TIMEOUT)
-            decoded_text = response.text
-            decoded_dir_links_with_time.append((commit_datetime, decoded_text))
+            content_response = requests.get(source_url, timeout=REQUEST_TIMEOUT)
+            plain_text_content = content_response.text
+            decoded_sources_with_timestamp.append((last_commit_datetime, plain_text_content))
         except (requests.RequestException, KeyError, IndexError) as e:
-            print(f"Error processing dir link {link}: {e}")
+            print(f"Error processing plain text source {source_url}: {e}")
             continue
 
-    # 返回带时间戳的数据供全局排序
-    return decoded_dir_links_with_time
+    return decoded_sources_with_timestamp
 
 
 # Filter function to select lines based on specified protocols and remove duplicates (only for config lines)
-def filter_for_protocols(data, protocols):
-    filtered_data = []
-    seen_configs = set()
-    seen_hosts = set()
-    header_lines = {"#profile-title", "#profile-update-interval", "#subscription-userinfo", "#support-url",
-                    "#profile-web-page-url"}
+def filter_and_deduplicate_configs(source_contents, supported_protocols):
+    filtered_configs = []
+    seen_config_lines = set()
+    seen_host_port_pairs = set()
+    header_keywords = {"#profile-title", "#profile-update-interval", "#subscription-userinfo", "#support-url",
+                       "#profile-web-page-url"}
 
-    def extract_host_port(line):
+    def extract_host_port_from_config(config_line):
         try:
             # vmess:// 特殊处理（base64 JSON）
-            if line.startswith("vmess://"):
-                raw = line[8:].strip()
+            if config_line.startswith("vmess://"):
+                vmess_config_part = config_line[8:].strip()
                 try:
-                    padded = raw + "=" * (-len(raw) % 4)  # 补齐 base64
-                    decoded_json = base64.b64decode(padded).decode("utf-8")
-                    obj = json.loads(decoded_json)
-                    host = obj.get("add")
-                    port = obj.get("port")
-                    if host and port:
-                        return f"{host}:{port}"
+                    base64_padded = vmess_config_part + "=" * (-len(vmess_config_part) % 4)  # 补齐 base64
+                    vmess_json_str = base64.b64decode(base64_padded).decode("utf-8")
+                    vmess_config_obj = json.loads(vmess_json_str)
+                    server_address = vmess_config_obj.get("add")
+                    server_port = vmess_config_obj.get("port")
+                    if server_address and server_port:
+                        return f"{server_address}:{server_port}"
                 except Exception:
                     return None
 
             # 通用协议（ss, vless, trojan, hysteria2, tuic, hy2...）
-            if line.startswith(("ss://", "ssr://", "vless://", "trojan://", "hysteria2://", "hy2://", "tuic://")):
-                parsed = urlparse(line)
-                if parsed.hostname and parsed.port:
-                    return f"{parsed.hostname}:{parsed.port}"
+            if config_line.startswith(
+                    ("ss://", "ssr://", "vless://", "trojan://", "hysteria2://", "hy2://", "tuic://")):
+                parsed_url = urlparse(config_line)
+                if parsed_url.hostname and parsed_url.port:
+                    return f"{parsed_url.hostname}:{parsed_url.port}"
 
             # 兜底正则匹配 @host:port
-            match = re.search(r'@([\w\.\-]+):(\d+)', line)
-            if match:
-                return f"{match.group(1)}:{match.group(2)}"
+            host_port_match = re.search(r'@([\w\.\-]+):(\d+)', config_line)
+            if host_port_match:
+                return f"{host_port_match.group(1)}:{host_port_match.group(2)}"
             return None
         except Exception:
             return None
 
     # 逐条数据处理
-    for content in data:
+    for content in source_contents:
         if content and content.strip():
-            lines = content.strip().split('\n')
-            for line in lines:
+            content_lines = content.strip().split('\n')
+            for line in content_lines:
                 line = line.strip()
                 if not line:
                     continue
                 if line.startswith('#'):
                     # 跳过重复 header 行
-                    if any(header in line for header in header_lines):
+                    if any(header_keyword in line for header_keyword in header_keywords):
                         continue
-                    filtered_data.append(line)
-                elif any(protocol in line for protocol in protocols):
-                    host_port = extract_host_port(line)
+                    filtered_configs.append(line)
+                elif any(protocol in line for protocol in supported_protocols):
+                    host_port = extract_host_port_from_config(line)
                     if host_port:
-                        if host_port in seen_hosts:
-                            continue  # 已存在，跳过
-                        seen_hosts.add(host_port)
-                    if line not in seen_configs:
-                        filtered_data.append(line)
-                        seen_configs.add(line)
-    return filtered_data
+                        if host_port in seen_host_port_pairs:
+                            continue  # 已存在相同的主机端口对，跳过
+                        seen_host_port_pairs.add(host_port)
+                    if line not in seen_config_lines:
+                        filtered_configs.append(line)
+                        seen_config_lines.add(line)
+    return filtered_configs
 
 
 # Create necessary directories if they don't exist
-def ensure_directories_exist():
+def create_output_directories():
     output_folder = os.path.join(os.path.dirname(__file__), "..", "data")
     base64_folder = os.path.join(output_folder, "Base64")
 
@@ -205,7 +208,7 @@ def ensure_directories_exist():
 
 # Main function to process links and write output files
 def main():
-    output_folder, base64_folder = ensure_directories_exist()  # Ensure directories are created
+    output_folder, base64_folder = create_output_directories()
 
     # Prepare output file paths
     output_filename = os.path.join(output_folder, "All_Configs_Sub.txt")
@@ -213,8 +216,8 @@ def main():
 
     print("Starting to fetch and process configs...")
 
-    protocols = ["vmess", "vless", "trojan", "ss", "ssr", "hy2", "tuic", "warp://"]
-    base64_links = [
+    supported_protocols = ["vmess", "vless", "trojan", "ss", "ssr", "hy2", "tuic", "warp://"]
+    base64_encoded_sources = [
         "https://raw.githubusercontent.com/ALIILAPRO/v2rayNG-Config/main/sub.txt",
         "https://raw.githubusercontent.com/mfuu/v2ray/master/v2ray",
         "https://raw.githubusercontent.com/ts-sf/fly/main/v2",
@@ -223,7 +226,7 @@ def main():
         "https://raw.githubusercontent.com/yebekhe/vpn-fail/refs/heads/main/sub-link",
         "https://raw.githubusercontent.com/Surfboardv2ray/TGParse/main/splitted/mixed"
     ]
-    dir_links = [
+    plain_text_sources = [
         "https://raw.githubusercontent.com/itsyebekhe/PSG/main/lite/subscriptions/xray/normal/mix",
         "https://raw.githubusercontent.com/HosseinKoofi/GO_V2rayCollector/main/mixed_iran.txt",
         "https://raw.githubusercontent.com/arshiacomplus/v2rayExtractor/refs/heads/main/mix/sub.html",
@@ -236,93 +239,95 @@ def main():
     ]
 
     print("Fetching base64 encoded configs...")
-    decoded_links_with_time = decode_b64_links(base64_links)
-    print(f"Decoded {len(decoded_links_with_time)} base64 sources")
+    base64_sources_with_time = fetch_and_decode_base64_sources(base64_encoded_sources)
+    print(f"Successfully fetched {len(base64_sources_with_time)} base64 sources")
 
     print("Fetching direct text configs...")
-    decoded_dir_links_with_time = decode_links(dir_links)
-    print(f"Decoded {len(decoded_dir_links_with_time)} direct text sources")
+    plain_text_sources_with_time = fetch_plain_text_sources(plain_text_sources)
+    print(f"Successfully fetched {len(plain_text_sources_with_time)} plain text sources")
 
-    print("Combining and sorting configs by time...")
+    print("Combining and sorting configs by timestamp...")
     # 合并所有带时间戳的数据
-    all_data_with_time = decoded_links_with_time + decoded_dir_links_with_time
+    all_sources_with_time = base64_sources_with_time + plain_text_sources_with_time
     # 按时间戳降序排序（最新的在前）
-    all_data_with_time.sort(key=lambda x: x[0], reverse=True)
+    all_sources_with_time.sort(key=lambda x: x[0], reverse=True)
     # 提取排序后的数据内容
-    combined_data = [data for (_, data) in all_data_with_time]
+    all_source_contents = [content for (_, content) in all_sources_with_time]
 
-    print("Filtering configs...")
-    merged_configs = filter_for_protocols(combined_data, protocols)
-    print(f"Found {len(merged_configs)} unique configs after filtering")
-    if len(merged_configs) < 1:
+    print("Filtering and deduplicating configs...")
+    unique_configs = filter_and_deduplicate_configs(all_source_contents, supported_protocols)
+    print(f"Found {len(unique_configs)} unique configs after filtering")
+    if len(unique_configs) < 1:
         print("No configs found. Exiting...")
         return
 
     # Write merged configs to output file
     print("Writing main config file...")
-    output_filename = os.path.join(output_folder, "All_Configs_Sub.txt")
     with open(output_filename, "w", encoding="utf-8") as f:
-        f.write(fixed_text)
-        for config in merged_configs:
+        f.write(DEFAULT_SUBSCRIPTION_HEADER)
+        for config in unique_configs:
             f.write(config + "\n")
     print(f"Main config file created: {output_filename}")
 
     # Create base64 version of the main file
     print("Creating base64 version...")
     with open(output_filename, "r", encoding="utf-8") as f:
-        main_config_data = f.read()
+        main_config_content = f.read()
 
-    main_base64_filename = os.path.join(output_folder, "All_Configs_base64_Sub.txt")
     with open(main_base64_filename, "w", encoding="utf-8") as f:
-        encoded_main_config = base64.b64encode(main_config_data.encode()).decode()
+        encoded_main_config = base64.b64encode(main_config_content.encode()).decode()
         f.write(encoded_main_config)
     print(f"Base64 config file created: {main_base64_filename}")
 
     # Split merged configs into smaller files (no more than 500 configs per file)
-    print("Creating split files...")
-    with open(output_filename, "r", encoding="utf-8") as f:
-        lines = f.readlines()
+    print("Creating split subscription files...")
 
-    num_lines = len(lines)
-    max_lines_per_file = 500
-    num_files = (num_lines + max_lines_per_file - 1) // max_lines_per_file
-    print(f"Splitting into {num_files} files with max {max_lines_per_file} lines each")
+    # 只处理配置行，不包含文件头
+    config_lines_with_newlines = []
+    for config in unique_configs:
+        config_lines_with_newlines.append(config + "\n")
 
-    for i in range(num_files):
-        profile_title = f"🆓 Git:barry-far | Sub{i + 1} 🔥"
-        encoded_title = base64.b64encode(profile_title.encode()).decode()
-        custom_fixed_text = f"""#profile-title: base64:{encoded_title}
+    total_config_lines = len(config_lines_with_newlines)
+    max_configs_per_file = 500
+    total_split_files = (total_config_lines + max_configs_per_file - 1) // max_configs_per_file
+    print(f"Splitting into {total_split_files} files with max {max_configs_per_file} configs each")
+
+    for file_index in range(total_split_files):
+        subscription_title = f"🆓 Git:barry-far | Sub{file_index + 1} 🔥"
+        encoded_subscription_title = base64.b64encode(subscription_title.encode()).decode()
+        custom_subscription_header = f"""#profile-title: base64:{encoded_subscription_title}
 #profile-update-interval: 1
 #subscription-userinfo: upload=29; download=12; total=10737418240000000; expire=2546249531
 #support-url: https://github.com/barry-far/V2ray-config
 #profile-web-page-url: https://github.com/barry-far/V2ray-config
 """
 
-        input_filename = os.path.join(output_folder, f"Sub{i + 1}.txt")
-        with open(input_filename, "w", encoding="utf-8") as f:
-            f.write(custom_fixed_text)
-            start_index = i * max_lines_per_file
-            end_index = min((i + 1) * max_lines_per_file, num_lines)
-            for line in lines[start_index:end_index]:
-                f.write(line)
-        print(f"Created: Sub{i + 1}.txt")
+        split_config_file = os.path.join(output_folder, f"Sub{file_index + 1}.txt")
+        with open(split_config_file, "w", encoding="utf-8") as f:
+            f.write(custom_subscription_header)
+            start_line_index = file_index * max_configs_per_file
+            end_line_index = min((file_index + 1) * max_configs_per_file, total_config_lines)
+            # 使用配置行列表而不是从文件读取
+            for config_line in config_lines_with_newlines[start_line_index:end_line_index]:
+                f.write(config_line)
+        print(f"Created: Sub{file_index + 1}.txt")
 
-        with open(input_filename, "r", encoding="utf-8") as input_file:
-            config_data = input_file.read()
+        with open(split_config_file, "r", encoding="utf-8") as input_file:
+            split_config_content = input_file.read()
 
-        base64_output_filename = os.path.join(base64_folder, f"Sub{i + 1}_base64.txt")
+        base64_output_filename = os.path.join(base64_folder, f"Sub{file_index + 1}_base64.txt")
         with open(base64_output_filename, "w", encoding="utf-8") as output_file:
-            encoded_config = base64.b64encode(config_data.encode()).decode()
-            output_file.write(encoded_config)
-        print(f"Created: Sub{i + 1}_base64.txt")
+            encoded_split_config = base64.b64encode(split_config_content.encode()).decode()
+            output_file.write(encoded_split_config)
+        print(f"Created: Sub{file_index + 1}_base64.txt")
 
     print(f"\nProcess completed successfully!")
-    print(f"Total configs processed: {len(merged_configs)}")
+    print(f"Total configs processed: {len(unique_configs)}")
     print(f"Files created:")
     print(f"  - All_Configs_Sub.txt")
     print(f"  - All_Configs_base64_Sub.txt")
-    print(f"  - {num_files} split files (Sub1.txt to Sub{num_files}.txt)")
-    print(f"  - {num_files} base64 split files (Sub1_base64.txt to Sub{num_files}_base64.txt)")
+    print(f"  - {total_split_files} split files (Sub1.txt to Sub{total_split_files}.txt)")
+    print(f"  - {total_split_files} base64 split files (Sub1_base64.txt to Sub{total_split_files}_base64.txt)")
 
 
 if __name__ == "__main__":
