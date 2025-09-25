@@ -132,65 +132,71 @@ def fetch_plain_text_sources(plain_text_source_urls):
 # Filter function to select lines based on specified protocols and remove duplicates (only for config lines)
 def filter_and_deduplicate_configs(source_contents, supported_protocols):
     filtered_configs = []
-    seen_config_lines = set()
-    seen_host_port_pairs = set()
-    header_keywords = {"#profile-title", "#profile-update-interval", "#subscription-userinfo", "#support-url",
-                       "#profile-web-page-url"}
+    seen = set()  # 存放去重 key（host:port 或整行）
+
+    header_keywords = {
+        "#profile-title",
+        "#profile-update-interval",
+        "#subscription-userinfo",
+        "#support-url",
+        "#profile-web-page-url",
+    }
 
     def extract_host_port_from_config(config_line):
+        """提取 host:port 用于去重"""
         try:
             # vmess:// 特殊处理（base64 JSON）
             if config_line.startswith("vmess://"):
-                vmess_config_part = config_line[8:].strip()
-                try:
-                    base64_padded = vmess_config_part + "=" * (-len(vmess_config_part) % 4)  # 补齐 base64
-                    vmess_json_str = base64.b64decode(base64_padded).decode("utf-8")
-                    vmess_config_obj = json.loads(vmess_json_str)
-                    server_address = vmess_config_obj.get("add")
-                    server_port = vmess_config_obj.get("port")
-                    if server_address and server_port:
-                        return f"{server_address}:{server_port}"
-                except Exception:
-                    return None
+                vmess_part = config_line[8:].strip()
+                padded = vmess_part + "=" * (-len(vmess_part) % 4)
+                vmess_json = base64.b64decode(padded).decode("utf-8")
+                vmess_obj = json.loads(vmess_json)
+                if vmess_obj.get("add") and vmess_obj.get("port"):
+                    return f"{vmess_obj['add']}:{vmess_obj['port']}"
 
-            # 通用协议（ss, vless, trojan, hysteria2, tuic, hy2...）
+            # 通用协议
             if config_line.startswith(
-                    ("ss://", "ssr://", "vless://", "trojan://", "hysteria2://", "hy2://", "tuic://")):
-                parsed_url = urlparse(config_line)
-                if parsed_url.hostname and parsed_url.port:
-                    return f"{parsed_url.hostname}:{parsed_url.port}"
+                ("ss://", "ssr://", "vless://", "trojan://", "hysteria2://", "hy2://", "tuic://")
+            ):
+                parsed = urlparse(config_line)
+                if parsed.hostname and parsed.port:
+                    return f"{parsed.hostname}:{parsed.port}"
 
-            # 兜底正则匹配 @host:port
-            host_port_match = re.search(r'@([\w\.\-]+):(\d+)', config_line)
-            if host_port_match:
-                return f"{host_port_match.group(1)}:{host_port_match.group(2)}"
+            # 正则兜底 @host:port
+            m = re.search(r"@([\w\.\-]+):(\d+)", config_line)
+            if m:
+                return f"{m.group(1)}:{m.group(2)}"
+
             return None
         except Exception:
             return None
 
     # 逐条数据处理
     for content in source_contents:
-        if content and content.strip():
-            content_lines = content.strip().split('\n')
-            for line in content_lines:
-                line = line.strip()
-                if not line:
-                    continue
-                if line.startswith('#'):
-                    # 跳过重复 header 行
-                    if any(header_keyword in line for header_keyword in header_keywords):
-                        continue
+        if not content.strip():
+            continue
+
+        for line in map(str.strip, content.splitlines()):
+            if not line:
+                continue
+
+            # header 行处理
+            if line.startswith("#"):
+                if any(k in line for k in header_keywords):
+                    continue  # 跳过重复 header 行
+                filtered_configs.append(line)
+                continue
+
+            # 协议行处理
+            if any(proto in line for proto in supported_protocols):
+                # 先尝试 host:port，否则 fallback 到整行
+                key = extract_host_port_from_config(line) or line
+                if key not in seen:
+                    seen.add(key)
                     filtered_configs.append(line)
-                elif any(protocol in line for protocol in supported_protocols):
-                    host_port = extract_host_port_from_config(line)
-                    if host_port:
-                        if host_port in seen_host_port_pairs:
-                            continue  # 已存在相同的主机端口对，跳过
-                        seen_host_port_pairs.add(host_port)
-                    if line not in seen_config_lines:
-                        filtered_configs.append(line)
-                        seen_config_lines.add(line)
+
     return filtered_configs
+
 
 
 # Create necessary directories if they don't exist
