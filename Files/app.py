@@ -231,6 +231,7 @@ def main():
         "https://raw.githubusercontent.com/4n0nymou3/multi-proxy-config-fetcher/refs/heads/main/configs/proxy_configs.txt",
         "https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/Eternity.txt",
         "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/all_configs.txt",
+        "https://raw.githubusercontent.com/crackbest/V2ray-Config/refs/heads/main/config.txt",
         "https://raw.githubusercontent.com/MahsaNetConfigTopic/config/refs/heads/main/xray_final.txt"
     ]
 
