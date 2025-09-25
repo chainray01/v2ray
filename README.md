@@ -1,3 +1,5 @@
-#### Project Overview
+## Project Overview
 
-This is a project for learning Python web scraping.
+This project is focused on learning and practicing Python web scraping techniques. 
+
+**Note:** This project will be closed soon.
