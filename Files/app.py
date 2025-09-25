@@ -66,7 +66,7 @@ def fetch_and_decode_base64_sources(base64_source_urls):
                 last_commit_time = commit_data[0]["commit"]["committer"]["date"]
                 last_commit_datetime = datetime.strptime(last_commit_time, "%Y-%m-%dT%H:%M:%SZ").replace(
                     tzinfo=timezone.utc)
-                if datetime.now(timezone.utc) - last_commit_datetime > timedelta(hours=48):
+                if datetime.now(timezone.utc) - last_commit_datetime > timedelta(hours=12):
                     print(f"Skipping outdated source: {source_url}")
                     continue
 
@@ -115,7 +115,7 @@ def fetch_plain_text_sources(plain_text_source_urls):
                     last_commit_time = commit_data[0]["commit"]["committer"]["date"]
                     last_commit_datetime = datetime.strptime(last_commit_time, "%Y-%m-%dT%H:%M:%SZ").replace(
                         tzinfo=timezone.utc)
-                    if datetime.now(timezone.utc) - last_commit_datetime > timedelta(hours=24):
+                    if datetime.now(timezone.utc) - last_commit_datetime > timedelta(hours=12):
                         print(f"Skipping outdated source: {source_url}")
                         continue
 
