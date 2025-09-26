@@ -13,13 +13,8 @@ from datetime import datetime, timedelta
 # Define a fixed timeout for HTTP requests
 REQUEST_TIMEOUT = 3  # seconds
 
-# Define the fixed text for the initial configuration
-DEFAULT_SUBSCRIPTION_HEADER = """#profile-title: base64:8J+GkyBHaXRodWIgfCBCYXJyeS1mYXIg8J+ltw==
-#profile-update-interval: 1
-#subscription-userinfo: upload=29; download=12; total=10737418240000000; expire=2546249531
-#support-url: https://github.com/barry-far/V2ray-config
-#profile-web-page-url: https://github.com/barry-far/V2ray-config
-"""
+# Default subscription title for main config file
+DEFAULT_SUBSCRIPTION_TITLE = "🆓 GitHub | Barry-far 🔥"
 
 
 def check_github_file_update_time(source_url, max_hours_old=12):
@@ -346,7 +341,7 @@ def main():
     # Write merged configs to output file
     print("Writing main config file...")
     with open(output_filename, "w", encoding="utf-8") as f:
-        f.write(DEFAULT_SUBSCRIPTION_HEADER)
+        f.write(create_subscription_header(DEFAULT_SUBSCRIPTION_TITLE))
         for config in unique_configs:
             f.write(config + "\n")
     print(f"Main config file created: {output_filename}")
