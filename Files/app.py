@@ -227,6 +227,83 @@ def create_output_directories():
     return output_folder, base64_folder
 
 
+def load_sources_from_json(json_path):
+    with open(json_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return data.get("base64_encoded_sources", []), data.get("plain_text_sources", [])
+
+
+def create_subscription_header(subscription_title):
+    """
+    Create a custom subscription header with the given title.
+    
+    Args:
+        subscription_title (str): The title for the subscription
+        
+    Returns:
+        str: Formatted subscription header
+    """
+    encoded_subscription_title = base64.b64encode(subscription_title.encode()).decode()
+    return f"""#profile-title: base64:{encoded_subscription_title}
+#profile-update-interval: 1
+#subscription-userinfo: upload=29; download=12; total=10737418240000000; expire=2546249531
+#support-url: https://github.com/barry-far/V2ray-config
+#profile-web-page-url: https://github.com/barry-far/V2ray-config
+"""
+
+
+def create_split_subscription_files(unique_configs, output_folder, base64_folder, max_configs_per_file=500):
+    """
+    Split configs into multiple subscription files and create their base64 versions.
+    
+    Args:
+        unique_configs (list): List of unique configuration lines
+        output_folder (str): Path to the main output folder
+        base64_folder (str): Path to the base64 output folder
+        max_configs_per_file (int): Maximum number of configs per file (default: 500)
+        
+    Returns:
+        int: Number of split files created
+    """
+    print("Creating split subscription files...")
+    
+    # 只处理配置行，不包含文件头
+    config_lines_with_newlines = []
+    for config in unique_configs:
+        config_lines_with_newlines.append(config + "\n")
+
+    total_config_lines = len(config_lines_with_newlines)
+    total_split_files = (total_config_lines + max_configs_per_file - 1) // max_configs_per_file
+    print(f"Splitting into {total_split_files} files with max {max_configs_per_file} configs each")
+
+    for file_index in range(total_split_files):
+        subscription_title = f"🆓 Git:barry-far | Sub{file_index + 1} 🔥"
+        custom_subscription_header = create_subscription_header(subscription_title)
+
+        # Create regular text file
+        split_config_file = os.path.join(output_folder, f"Sub{file_index + 1}.txt")
+        with open(split_config_file, "w", encoding="utf-8") as f:
+            f.write(custom_subscription_header)
+            start_line_index = file_index * max_configs_per_file
+            end_line_index = min((file_index + 1) * max_configs_per_file, total_config_lines)
+            # 使用配置行列表而不是从文件读取
+            for config_line in config_lines_with_newlines[start_line_index:end_line_index]:
+                f.write(config_line)
+        print(f"Created: Sub{file_index + 1}.txt")
+
+        # Create base64 version
+        with open(split_config_file, "r", encoding="utf-8") as input_file:
+            split_config_content = input_file.read()
+
+        base64_output_filename = os.path.join(base64_folder, f"Sub{file_index + 1}_base64.txt")
+        with open(base64_output_filename, "w", encoding="utf-8") as output_file:
+            encoded_split_config = base64.b64encode(split_config_content.encode()).decode()
+            output_file.write(encoded_split_config)
+        print(f"Created: Sub{file_index + 1}_base64.txt")
+
+    return total_split_files
+
+
 # Main function to process links and write output files
 def main():
     output_folder, base64_folder = create_output_directories()
@@ -238,26 +315,10 @@ def main():
     print("Starting to fetch and process configs...")
 
     supported_protocols = ["vmess", "vless", "trojan", "ss", "ssr", "hy2", "tuic", "warp://"]
-    base64_encoded_sources = [
-        "https://raw.githubusercontent.com/ALIILAPRO/v2rayNG-Config/main/sub.txt",
-        "https://raw.githubusercontent.com/mfuu/v2ray/master/v2ray",
-        "https://raw.githubusercontent.com/ts-sf/fly/main/v2",
-        "https://raw.githubusercontent.com/aiboboxx/v2rayfree/main/v2",
-        "https://raw.githubusercontent.com/MatinGhanbari/v2ray-configs/main/subscriptions/v2ray/super-sub.txt",
-        "https://raw.githubusercontent.com/yebekhe/vpn-fail/refs/heads/main/sub-link",
-        "https://raw.githubusercontent.com/Surfboardv2ray/TGParse/main/splitted/mixed"
-    ]
-    plain_text_sources = [
-        "https://raw.githubusercontent.com/itsyebekhe/PSG/main/lite/subscriptions/xray/normal/mix",
-        "https://raw.githubusercontent.com/HosseinKoofi/GO_V2rayCollector/main/mixed_iran.txt",
-        "https://raw.githubusercontent.com/arshiacomplus/v2rayExtractor/refs/heads/main/mix/sub.html",
-        "https://raw.githubusercontent.com/Rayan-Config/C-Sub/refs/heads/main/configs/proxy.txt",
-        "https://raw.githubusercontent.com/10ium/V2ray-Config/main/Base64/Sub1_base64.txt",
-        "https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/Eternity.txt",
-        "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/all_configs.txt",
-        "https://raw.githubusercontent.com/crackbest/V2ray-Config/refs/heads/main/config.txt",
-        "https://raw.githubusercontent.com/MahsaNetConfigTopic/config/refs/heads/main/xray_final.txt"
-    ]
+
+    # 从 JSON 文件读取源列表
+    sources_json_path = os.path.join(os.path.dirname(__file__), "sources.json")
+    base64_encoded_sources, plain_text_sources = load_sources_from_json(sources_json_path)
 
     print("Fetching base64 encoded configs...")
     base64_sources_with_time = fetch_and_decode_base64_sources(base64_encoded_sources)
@@ -300,47 +361,8 @@ def main():
         f.write(encoded_main_config)
     print(f"Base64 config file created: {main_base64_filename}")
 
-    # Split merged configs into smaller files (no more than 500 configs per file)
-    print("Creating split subscription files...")
-
-    # 只处理配置行，不包含文件头
-    config_lines_with_newlines = []
-    for config in unique_configs:
-        config_lines_with_newlines.append(config + "\n")
-
-    total_config_lines = len(config_lines_with_newlines)
-    max_configs_per_file = 500
-    total_split_files = (total_config_lines + max_configs_per_file - 1) // max_configs_per_file
-    print(f"Splitting into {total_split_files} files with max {max_configs_per_file} configs each")
-
-    for file_index in range(total_split_files):
-        subscription_title = f"🆓 Git:barry-far | Sub{file_index + 1} 🔥"
-        encoded_subscription_title = base64.b64encode(subscription_title.encode()).decode()
-        custom_subscription_header = f"""#profile-title: base64:{encoded_subscription_title}
-#profile-update-interval: 1
-#subscription-userinfo: upload=29; download=12; total=10737418240000000; expire=2546249531
-#support-url: https://github.com/barry-far/V2ray-config
-#profile-web-page-url: https://github.com/barry-far/V2ray-config
-"""
-
-        split_config_file = os.path.join(output_folder, f"Sub{file_index + 1}.txt")
-        with open(split_config_file, "w", encoding="utf-8") as f:
-            f.write(custom_subscription_header)
-            start_line_index = file_index * max_configs_per_file
-            end_line_index = min((file_index + 1) * max_configs_per_file, total_config_lines)
-            # 使用配置行列表而不是从文件读取
-            for config_line in config_lines_with_newlines[start_line_index:end_line_index]:
-                f.write(config_line)
-        print(f"Created: Sub{file_index + 1}.txt")
-
-        with open(split_config_file, "r", encoding="utf-8") as input_file:
-            split_config_content = input_file.read()
-
-        base64_output_filename = os.path.join(base64_folder, f"Sub{file_index + 1}_base64.txt")
-        with open(base64_output_filename, "w", encoding="utf-8") as output_file:
-            encoded_split_config = base64.b64encode(split_config_content.encode()).decode()
-            output_file.write(encoded_split_config)
-        print(f"Created: Sub{file_index + 1}_base64.txt")
+    # Split configs using the new method
+    total_split_files = create_split_subscription_files(unique_configs, output_folder, base64_folder)
 
     print(f"\nProcess completed successfully!")
     print(f"Total configs processed: {len(unique_configs)}")
