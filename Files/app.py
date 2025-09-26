@@ -11,7 +11,7 @@ from datetime import timezone
 from datetime import datetime, timedelta
 
 # Define a fixed timeout for HTTP requests
-REQUEST_TIMEOUT = 15  # seconds
+REQUEST_TIMEOUT = 3  # seconds
 
 # Define the fixed text for the initial configuration
 DEFAULT_SUBSCRIPTION_HEADER = """#profile-title: base64:8J+GkyBHaXRodWIgfCBCYXJyeS1mYXIg8J+ltw==
@@ -20,6 +20,66 @@ DEFAULT_SUBSCRIPTION_HEADER = """#profile-title: base64:8J+GkyBHaXRodWIgfCBCYXJy
 #support-url: https://github.com/barry-far/V2ray-config
 #profile-web-page-url: https://github.com/barry-far/V2ray-config
 """
+
+
+def check_github_file_update_time(source_url, max_hours_old=12):
+    """
+    Check if a GitHub file was updated within the specified time period.
+    
+    Args:
+        source_url (str): The GitHub raw file URL
+        max_hours_old (int): Maximum hours old to consider the file as updated (default: 12)
+    
+    Returns:
+        tuple: (is_updated, last_commit_datetime)
+            - is_updated (bool): True if file was updated within max_hours_old
+            - last_commit_datetime (datetime): The datetime of the last commit, or datetime.min if error
+    """
+    try:
+        # Parse GitHub link to extract owner, repo, and file_path
+        url_parts = source_url.split("/")
+        if len(url_parts) < 6:
+            return False, datetime.min.replace(tzinfo=timezone.utc)
+            
+        repo_owner, repo_name = url_parts[3], url_parts[4]
+        
+        # Remove 'master', 'main', or 'refs/heads/main' from file_path if present
+        file_path_parts = url_parts[5:]
+        if file_path_parts and file_path_parts[0] in ["master", "main"]:
+            file_path_parts = file_path_parts[1:]
+        elif len(file_path_parts) >= 3 and file_path_parts[:3] == ["refs", "heads", "main"]:
+            file_path_parts = file_path_parts[3:]
+        file_path = "/".join(file_path_parts)
+
+        # Check if the link is updated within the specified time period
+        github_api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/commits"
+        api_params = {"path": file_path, "page": 1, "per_page": 1}
+        request_headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        
+        api_response = requests.get(github_api_url, params=api_params, headers=request_headers,
+                                    timeout=REQUEST_TIMEOUT)
+        api_response.raise_for_status()
+        commit_data = api_response.json()
+
+        if isinstance(commit_data, list) and len(commit_data) > 0:
+            last_commit_time = commit_data[0]["commit"]["committer"]["date"]
+            last_commit_datetime = datetime.strptime(last_commit_time, "%Y-%m-%dT%H:%M:%SZ").replace(
+                tzinfo=timezone.utc)
+            
+            # Check if file is updated within the specified hours
+            time_diff = datetime.now(timezone.utc) - last_commit_datetime
+            is_updated = time_diff <= timedelta(hours=max_hours_old)
+            
+            return is_updated, last_commit_datetime
+        else:
+            return False, datetime.min.replace(tzinfo=timezone.utc)
+            
+    except (requests.RequestException, KeyError, IndexError, ValueError) as e:
+        print(f"Error checking GitHub API for {source_url}: {e}")
+        return False, datetime.min.replace(tzinfo=timezone.utc)
 
 
 # Base64 decoding function
@@ -39,44 +99,20 @@ def fetch_and_decode_base64_sources(base64_source_urls):
     decoded_sources_with_timestamp = []
     for source_url in base64_source_urls:
         try:
-            # Parse GitHub link to extract owner, repo, and file_path
-            url_parts = source_url.split("/")
-            repo_owner, repo_name = url_parts[3], url_parts[4]
-            # Remove 'master', 'main', or 'refs/heads/main' from file_path if present
-            file_path_parts = url_parts[5:]
-            if file_path_parts and file_path_parts[0] in ["master", "main"]:
-                file_path_parts = file_path_parts[1:]
-            elif file_path_parts[:3] == ["refs", "heads", "main"]:
-                file_path_parts = file_path_parts[3:]
-            file_path = "/".join(file_path_parts)
+            # Check if the file is updated within the last 12 hours
+            is_updated, last_commit_datetime = check_github_file_update_time(source_url, max_hours_old=12)
+            if not is_updated:
+                print(f"Skipping outdated source: {source_url}")
+                continue
 
-            # Check if the link is updated within the last 48 hours
-            github_api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/commits"
-            api_params = {"path": file_path, "page": 1, "per_page": 1}
-            request_headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-                "Accept": "application/vnd.github.v3+json"
-            }
-            api_response = requests.get(github_api_url, params=api_params, headers=request_headers,
-                                        timeout=REQUEST_TIMEOUT)
-            api_response.raise_for_status()
-            commit_data = api_response.json()
-
-            if isinstance(commit_data, list) and len(commit_data) > 0:
-                last_commit_time = commit_data[0]["commit"]["committer"]["date"]
-                last_commit_datetime = datetime.strptime(last_commit_time, "%Y-%m-%dT%H:%M:%SZ").replace(
-                    tzinfo=timezone.utc)
-                if datetime.now(timezone.utc) - last_commit_datetime > timedelta(hours=12):
-                    print(f"Skipping outdated source: {source_url}")
-                    continue
-
-                # Fetch and decode the link content
-                content_response = requests.get(source_url, timeout=REQUEST_TIMEOUT)
-                content_response.raise_for_status()
-                encoded_content = content_response.content
-                decoded_content = decode_base64_content(encoded_content)
-                decoded_sources_with_timestamp.append((last_commit_datetime, decoded_content))
-        except (requests.RequestException, KeyError, IndexError) as e:
+            # Fetch and decode the link content
+            content_response = requests.get(source_url, timeout=REQUEST_TIMEOUT)
+            content_response.raise_for_status()
+            encoded_content = content_response.content
+            decoded_content = decode_base64_content(encoded_content)
+            decoded_sources_with_timestamp.append((last_commit_datetime, decoded_content))
+            
+        except requests.RequestException as e:
             print(f"Error processing base64 source {source_url}: {e}")
             continue
 
@@ -89,40 +125,20 @@ def fetch_plain_text_sources(plain_text_source_urls):
     for source_url in plain_text_source_urls:
         try:
             last_commit_datetime = datetime.min.replace(tzinfo=timezone.utc)
-            # Parse GitHub link to extract owner, repo, and file_path
-            url_parts = source_url.split("/")
-            if "githubusercontent.com" in source_url and len(url_parts) > 5:
-                repo_owner, repo_name = url_parts[3], url_parts[4]
-                file_path_parts = url_parts[5:]
-                if file_path_parts and file_path_parts[0] in ["master", "main"]:
-                    file_path_parts = file_path_parts[1:]
-                elif file_path_parts[:3] == ["refs", "heads", "main"]:
-                    file_path_parts = file_path_parts[3:]
-                file_path = "/".join(file_path_parts)
-
-                # Check if the link is updated within the last 24 hours
-                github_api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/commits"
-                api_params = {"path": file_path, "page": 1, "per_page": 1}
-                request_headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-                    "Accept": "application/vnd.github.v3+json"
-                }
-                api_response = requests.get(github_api_url, params=api_params, headers=request_headers,
-                                            timeout=REQUEST_TIMEOUT)
-                api_response.raise_for_status()
-                commit_data = api_response.json()
-                if isinstance(commit_data, list) and len(commit_data) > 0:
-                    last_commit_time = commit_data[0]["commit"]["committer"]["date"]
-                    last_commit_datetime = datetime.strptime(last_commit_time, "%Y-%m-%dT%H:%M:%SZ").replace(
-                        tzinfo=timezone.utc)
-                    if datetime.now(timezone.utc) - last_commit_datetime > timedelta(hours=12):
-                        print(f"Skipping outdated source: {source_url}")
-                        continue
+            
+            # Check if this is a GitHub URL and validate update time
+            if "githubusercontent.com" in source_url:
+                is_updated, last_commit_datetime = check_github_file_update_time(source_url, max_hours_old=12)
+                if not is_updated:
+                    print(f"Skipping outdated source: {source_url}")
+                    continue
 
             content_response = requests.get(source_url, timeout=REQUEST_TIMEOUT)
+            content_response.raise_for_status()
             plain_text_content = content_response.text
             decoded_sources_with_timestamp.append((last_commit_datetime, plain_text_content))
-        except (requests.RequestException, KeyError, IndexError) as e:
+            
+        except requests.RequestException as e:
             print(f"Error processing plain text source {source_url}: {e}")
             continue
 
@@ -196,7 +212,6 @@ def filter_and_deduplicate_configs(source_contents, supported_protocols):
                     filtered_configs.append(line)
 
     return filtered_configs
-
 
 
 # Create necessary directories if they don't exist
