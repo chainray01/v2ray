@@ -16,8 +16,9 @@ REQUEST_TIMEOUT = 3  # seconds
 # Default subscription title for main config file
 DEFAULT_SUBSCRIPTION_TITLE = "🆓 GitHub | Barry-far 🔥"
 
+MAX_HOURS_OLD = 6  # Maximum hours old to consider a file as updated
 
-def check_github_file_update_time(source_url, max_hours_old=12):
+def check_github_file_update_time(source_url, max_hours_old=MAX_HOURS_OLD):
     """
     Check if a GitHub file was updated within the specified time period.
     
@@ -66,7 +67,7 @@ def check_github_file_update_time(source_url, max_hours_old=12):
             
             # Check if file is updated within the specified hours
             time_diff = datetime.now(timezone.utc) - last_commit_datetime
-            is_updated = time_diff <= timedelta(hours=max_hours_old)
+            is_updated = time_diff <= timedelta(hours(max_hours_old))
             
             return is_updated, last_commit_datetime
         else:
@@ -94,8 +95,8 @@ def fetch_and_decode_base64_sources(base64_source_urls):
     decoded_sources_with_timestamp = []
     for source_url in base64_source_urls:
         try:
-            # Check if the file is updated within the last 12 hours
-            is_updated, last_commit_datetime = check_github_file_update_time(source_url, max_hours_old=12)
+            # Check if the file is updated within the last MAX_HOURS_OLD hours
+            is_updated, last_commit_datetime = check_github_file_update_time(source_url, max_hours_old=MAX_HOURS_OLD)
             if not is_updated:
                 print(f"Skipping outdated source: {source_url}")
                 continue
@@ -123,7 +124,7 @@ def fetch_plain_text_sources(plain_text_source_urls):
             
             # Check if this is a GitHub URL and validate update time
             if "githubusercontent.com" in source_url:
-                is_updated, last_commit_datetime = check_github_file_update_time(source_url, max_hours_old=12)
+                is_updated, last_commit_datetime = check_github_file_update_time(source_url, max_hours_old=MAX_HOURS_OLD)
                 if not is_updated:
                     print(f"Skipping outdated source: {source_url}")
                     continue
