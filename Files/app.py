@@ -18,6 +18,7 @@ DEFAULT_SUBSCRIPTION_TITLE = "🆓 GitHub | Barry-far 🔥"
 
 MAX_HOURS_OLD = 6  # Maximum hours old to consider a file as updated
 
+
 def check_github_file_update_time(source_url, max_hours_old=MAX_HOURS_OLD):
     """
     Check if a GitHub file was updated within the specified time period.
@@ -36,9 +37,9 @@ def check_github_file_update_time(source_url, max_hours_old=MAX_HOURS_OLD):
         url_parts = source_url.split("/")
         if len(url_parts) < 6:
             return False, datetime.min.replace(tzinfo=timezone.utc)
-            
+
         repo_owner, repo_name = url_parts[3], url_parts[4]
-        
+
         # Remove 'master', 'main', or 'refs/heads/main' from file_path if present
         file_path_parts = url_parts[5:]
         if file_path_parts and file_path_parts[0] in ["master", "main"]:
@@ -54,7 +55,7 @@ def check_github_file_update_time(source_url, max_hours_old=MAX_HOURS_OLD):
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
             "Accept": "application/vnd.github.v3+json"
         }
-        
+
         api_response = requests.get(github_api_url, params=api_params, headers=request_headers,
                                     timeout=REQUEST_TIMEOUT)
         api_response.raise_for_status()
@@ -64,15 +65,15 @@ def check_github_file_update_time(source_url, max_hours_old=MAX_HOURS_OLD):
             last_commit_time = commit_data[0]["commit"]["committer"]["date"]
             last_commit_datetime = datetime.strptime(last_commit_time, "%Y-%m-%dT%H:%M:%SZ").replace(
                 tzinfo=timezone.utc)
-            
+
             # Check if file is updated within the specified hours
             time_diff = datetime.now(timezone.utc) - last_commit_datetime
-            is_updated = time_diff <= timedelta(hours(max_hours_old))
-            
+            is_updated = time_diff <= timedelta(hours=max_hours_old)
+
             return is_updated, last_commit_datetime
         else:
             return False, datetime.min.replace(tzinfo=timezone.utc)
-            
+
     except (requests.RequestException, KeyError, IndexError, ValueError) as e:
         print(f"Error checking GitHub API for {source_url}: {e}")
         return False, datetime.min.replace(tzinfo=timezone.utc)
@@ -107,7 +108,7 @@ def fetch_and_decode_base64_sources(base64_source_urls):
             encoded_content = content_response.content
             decoded_content = decode_base64_content(encoded_content)
             decoded_sources_with_timestamp.append((last_commit_datetime, decoded_content))
-            
+
         except requests.RequestException as e:
             print(f"Error processing base64 source {source_url}: {e}")
             continue
@@ -121,10 +122,11 @@ def fetch_plain_text_sources(plain_text_source_urls):
     for source_url in plain_text_source_urls:
         try:
             last_commit_datetime = datetime.min.replace(tzinfo=timezone.utc)
-            
+
             # Check if this is a GitHub URL and validate update time
             if "githubusercontent.com" in source_url:
-                is_updated, last_commit_datetime = check_github_file_update_time(source_url, max_hours_old=MAX_HOURS_OLD)
+                is_updated, last_commit_datetime = check_github_file_update_time(source_url,
+                                                                                 max_hours_old=MAX_HOURS_OLD)
                 if not is_updated:
                     print(f"Skipping outdated source: {source_url}")
                     continue
@@ -133,7 +135,7 @@ def fetch_plain_text_sources(plain_text_source_urls):
             content_response.raise_for_status()
             plain_text_content = content_response.text
             decoded_sources_with_timestamp.append((last_commit_datetime, plain_text_content))
-            
+
         except requests.RequestException as e:
             print(f"Error processing plain text source {source_url}: {e}")
             continue
@@ -168,7 +170,7 @@ def filter_and_deduplicate_configs(source_contents, supported_protocols):
 
             # 通用协议
             if config_line.startswith(
-                ("ss://", "ssr://", "vless://", "trojan://", "hysteria2://", "hy2://", "tuic://")
+                    ("ss://", "ssr://", "vless://", "trojan://", "hysteria2://", "hy2://", "tuic://")
             ):
                 parsed = urlparse(config_line)
                 if parsed.hostname and parsed.port:
@@ -262,7 +264,7 @@ def create_split_subscription_files(unique_configs, output_folder, base64_folder
         int: Number of split files created
     """
     print("Creating split subscription files...")
-    
+
     # 只处理配置行，不包含文件头
     config_lines_with_newlines = []
     for config in unique_configs:
