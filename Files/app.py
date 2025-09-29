@@ -91,6 +91,45 @@ def decode_base64_content(encoded_data):
     return decoded_content
 
 
+def split_concatenated_configs(content):
+    """
+    Split content that may have concatenated configs without newlines.
+    Handles cases like: base64_config}ss://config or vmess://config}vless://config
+    
+    Args:
+        content (str): The content that may contain concatenated configs
+        
+    Returns:
+        str: Content with proper newlines between configs
+    """
+    # Define protocol patterns that indicate the start of a new config
+    protocol_patterns = [
+        r'(vmess://)',
+        r'(vless://)',
+        r'(trojan://)',
+        r'(ss://)',
+        r'(ssr://)',
+        r'(hy2://)',
+        r'(hysteria2://)',
+        r'(tuic://)',
+        r'(warp://)'
+    ]
+    
+    # Also split on closing braces followed by protocols (for base64 vmess configs)
+    # Pattern: }vmess:// or }ss:// etc.
+    combined_pattern = r'(\}(?=' + '|'.join([p.strip(r'()') for p in protocol_patterns]) + r'))'
+    
+    # First, add newlines after closing braces that precede protocols
+    content = re.sub(combined_pattern, r'}\n', content)
+    
+    # Then add newlines before protocols if they're not already on a new line
+    for pattern in protocol_patterns:
+        # Only add newline if the protocol is not at the start of a line
+        content = re.sub(r'([^\n])' + pattern, r'\1\n\2', content)
+    
+    return content
+
+
 # Function to decode base64-encoded links with a timeout (返回带时间戳的数据)
 def fetch_and_decode_base64_sources(base64_source_urls):
     decoded_sources_with_timestamp = []
@@ -107,6 +146,10 @@ def fetch_and_decode_base64_sources(base64_source_urls):
             content_response.raise_for_status()
             encoded_content = content_response.content
             decoded_content = decode_base64_content(encoded_content)
+            
+            # Split concatenated configs
+            decoded_content = split_concatenated_configs(decoded_content)
+            
             decoded_sources_with_timestamp.append((last_commit_datetime, decoded_content))
 
         except requests.RequestException as e:
@@ -134,6 +177,10 @@ def fetch_plain_text_sources(plain_text_source_urls):
             content_response = requests.get(source_url, timeout=REQUEST_TIMEOUT)
             content_response.raise_for_status()
             plain_text_content = content_response.text
+            
+            # Split concatenated configs
+            plain_text_content = split_concatenated_configs(plain_text_content)
+            
             decoded_sources_with_timestamp.append((last_commit_datetime, plain_text_content))
 
         except requests.RequestException as e:
