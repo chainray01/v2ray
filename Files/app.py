@@ -206,10 +206,6 @@ def filter_and_deduplicate_configs(source_contents, supported_protocols):
     def extract_host_port_from_config(config_line):
         """提取 host:port 用于去重"""
         try:
-            # 特殊处理
-            if config_line.startswith("hysteria2://") or config_line.startswith("hy2://"):
-                return None  # 暂时不添加这两种数据类型到文档中
-            
             # vmess:// 特殊处理（base64 JSON）
             if config_line.startswith("vmess://"):
                 vmess_part = config_line[8:].strip()
