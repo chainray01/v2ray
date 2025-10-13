@@ -7,6 +7,7 @@ import base64
 import requests
 import binascii
 import os
+import random
 from datetime import timezone
 from datetime import datetime, timedelta
 
@@ -315,6 +316,9 @@ def create_split_subscription_files(unique_configs, output_folder, base64_folder
     config_lines_with_newlines = []
     for config in unique_configs:
         config_lines_with_newlines.append(config + "\n")
+    
+    # 打乱顺序
+    random.shuffle(config_lines_with_newlines)
 
     total_config_lines = len(config_lines_with_newlines)
     total_split_files = (total_config_lines + max_configs_per_file - 1) // max_configs_per_file
