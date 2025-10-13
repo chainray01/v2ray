@@ -316,9 +316,6 @@ def create_split_subscription_files(unique_configs, output_folder, base64_folder
     config_lines_with_newlines = []
     for config in unique_configs:
         config_lines_with_newlines.append(config + "\n")
-    
-    # 打乱顺序
-    random.shuffle(config_lines_with_newlines)
 
     total_config_lines = len(config_lines_with_newlines)
     total_split_files = (total_config_lines + max_configs_per_file - 1) // max_configs_per_file
@@ -390,6 +387,9 @@ def main():
     if len(unique_configs) < 1:
         print("No configs found. Exiting...")
         return
+    
+    # 打乱顺序
+    random.shuffle(unique_configs)
 
     # Write merged configs to output file
     print("Writing main config file...")
