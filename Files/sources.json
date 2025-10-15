@@ -20,10 +20,6 @@
     "https://raw.githubusercontent.com/crackbest/V2ray-Config/refs/heads/main/config.txt",
     "https://raw.githubusercontent.com/Firmfox/proxify/main/v2ray_configs/mixed/subscription-1.txt",
     "https://raw.githubusercontent.com/Firmfox/proxify/main/v2ray_configs/mixed/subscription-2.txt",
-    "https://raw.githubusercontent.com/Firmfox/proxify/main/v2ray_configs/mixed/subscription-3.txt",
-    "https://raw.githubusercontent.com/MahsaNetConfigTopic/config/refs/heads/main/xray_final.txt",
-    "https://raw.githubusercontent.com/tristan-deng/v2rayNodesSelected/main/MyNodes.txt",
-    "https://raw.githubusercontent.com/wudongdefeng/free/main/freevm/list_raw.txt",
-    "https://raw.githubusercontent.com/theGreatPeter/v2rayNodes/main/nodes.txt"
+    "https://raw.githubusercontent.com/Firmfox/proxify/main/v2ray_configs/mixed/subscription-3.txt"
   ]
 }
