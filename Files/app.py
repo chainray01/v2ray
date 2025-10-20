@@ -17,7 +17,7 @@ REQUEST_TIMEOUT = 3  # seconds
 # Default subscription title for main config file
 DEFAULT_SUBSCRIPTION_TITLE = "🆓 GitHub | Barry-far 🔥"
 
-MAX_HOURS_OLD = 6  # Maximum hours old to consider a file as updated
+MAX_HOURS_OLD = 9  # Maximum hours old to consider a file as updated
 
 
 def check_github_file_update_time(source_url, max_hours_old=MAX_HOURS_OLD):
