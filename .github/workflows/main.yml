@@ -49,6 +49,12 @@ jobs:
         echo "Running sort.py..."
         python sort.py
 
+    - name: Run speed test
+      working-directory: Files
+      run: |
+        chmod +x speedtest.sh
+        ./speedtest.sh
+
     - name: Check if data directory exists
       id: check-data
       run: |
