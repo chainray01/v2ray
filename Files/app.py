@@ -387,9 +387,6 @@ def main():
     if len(unique_configs) < 1:
         print("No configs found. Exiting...")
         return
-    
-    # 打乱顺序
-    random.shuffle(unique_configs)
 
     # Write merged configs to output file
     print("Writing main config file...")
