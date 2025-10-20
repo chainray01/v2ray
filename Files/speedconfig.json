@@ -1,0 +1,14 @@
+{
+    "group":"FreeProxies",
+    "speedtestMode":"all",
+    "pingMethod":"googleping",
+    "sortMethod":"rspeed",
+    "concurrency":15,
+    "testMode":2,
+    "subscription":"https://raw.githubusercontent.com/chainray01/v2ray/refs/heads/links/All_Configs_base64_Sub.txt",
+    "timeout":12,
+    "language":"en",
+    "fontSize":24,
+    "theme":"rainbow",
+    "generatePicMode": 0
+}

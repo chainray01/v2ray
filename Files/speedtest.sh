@@ -3,4 +3,4 @@ wget -O lite-linux-amd64.gz https://github.com/xxf098/LiteSpeedTest/releases/dow
 gzip -d lite-linux-amd64.gz
 #运行 LiteSpeedTest
 chmod +x ./lite-linux-amd64
-sudo nohup ./lite-linux-amd64 --config ../data/All_Configs_Sub.txt --test subs >speedtest.log 2>&1 &
+sudo nohup ./lite-linux-amd64 --config speedconfig.json --test ../data/All_Configs_Sub.txt >speedtest.log 2>&1 &
