@@ -4,6 +4,9 @@ import (
 	"time"
     "github.com/xxf098/lite-proxy/web"
 )
+ //测速
+ //https://github.com/mahdibland/V2RayAggregator
+ //https://github.com/xxf098/LiteSpeedTest
 // see more details in ./examples
 func testPing() error {
     ctx := context.Background()
