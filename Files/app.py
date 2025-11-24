@@ -297,7 +297,7 @@ def create_subscription_header(subscription_title):
 """
 
 
-def create_split_subscription_files(unique_configs, output_folder, base64_folder, max_configs_per_file=500):
+def create_split_subscription_files(unique_configs, output_folder, base64_folder, max_configs_per_file=1000):
     """
     Split configs into multiple subscription files and create their base64 versions.
     
@@ -305,7 +305,7 @@ def create_split_subscription_files(unique_configs, output_folder, base64_folder
         unique_configs (list): List of unique configuration lines
         output_folder (str): Path to the main output folder
         base64_folder (str): Path to the base64 output folder
-        max_configs_per_file (int): Maximum number of configs per file (default: 500)
+        max_configs_per_file (int): Maximum number of configs per file (default: 1000)
         
     Returns:
         int: Number of split files created
