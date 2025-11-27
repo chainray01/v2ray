@@ -28,13 +28,13 @@ func main() {
         SpeedTestMode: "pingonly",
         PingMethod:    "googleping",
         SortMethod:    "rspeed",
-        Concurrency:   2,
+        Concurrency:   4,
         TestMode:      2,
         Language:      "en",
         FontSize:      24,
         Theme:         "rainbow",
         Unique:        true,
-        Timeout:       10 * time.Second,
+        Timeout:       3 * time.Second,
         OutputMode:    0,
     }
 
@@ -43,9 +43,17 @@ func main() {
         panic(err)
     }
 
+    // 打开文件写入
+    f, err := os.Create("../data/test_result.txt")
+    if err != nil {
+        panic(fmt.Sprintf("cannot create output file: %v", err))
+    }
+    defer f.Close()
+
     for _, node := range nodes {
         if node.IsOk {
-            fmt.Println(node.Remarks)
+            _, _ = f.WriteString(node.Remarks + "\n")  // 写入文件
+            //fmt.Println(node.Remarks)                  // 同时输出到 stdout（可选）
         }
     }
 }
