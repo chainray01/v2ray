@@ -2,6 +2,8 @@ package main
 import (
     "context"
     "fmt"
+	"os"       // ← 必须导入 os
+    "strings"  // ← 必须导入 strings
 	"time"
     "github.com/xxf098/lite-proxy/web"
 )
