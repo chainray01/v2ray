@@ -10,10 +10,17 @@ import (
 // see more details in ./examples
 func testPing() error {
     ctx := context.Background()
-	link := os.Getenv("SUB_LINK")
-	if link == "" {
-		panic("SUB_LINK environment variable is empty")
-	}
+
+    // 直接读取文件内容
+    bytes, err := os.ReadFile("../data/All_Configs_base64_Sub.txt")
+    if err != nil {
+        return fmt.Errorf("cannot read subscription file: %v", err)
+    }
+
+    link := strings.TrimSpace(string(bytes))
+    if link == "" {
+        return fmt.Errorf("subscription content is empty")
+    }
     opts := web.ProfileTestOptions{
 		GroupName:     "Default", 
 		SpeedTestMode: "pingonly",   //  pingonly speedonly all
