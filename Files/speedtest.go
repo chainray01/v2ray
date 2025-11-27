@@ -2,7 +2,7 @@ import (
     "context"
     "fmt"
 	"time"
-    "github.com/xxf098/lite-proxy/web"
+    "github.com/xxf098/LiteSpeedTest/web"
 )
  //测速
  //https://github.com/mahdibland/V2RayAggregator
@@ -10,7 +10,10 @@ import (
 // see more details in ./examples
 func testPing() error {
     ctx := context.Background()
-    link := "https://www.example.com/subscription/link"
+	link := os.Getenv("SUB_LINK")
+	if link == "" {
+		panic("SUB_LINK environment variable is empty")
+	}
     opts := web.ProfileTestOptions{
 		GroupName:     "Default", 
 		SpeedTestMode: "pingonly",   //  pingonly speedonly all

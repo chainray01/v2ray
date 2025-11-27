@@ -48,6 +48,30 @@ jobs:
         python app.py
         echo "Running sort.py..."
         python sort.py
+        
+    - name: Read subscription file
+      id: subfile
+      run: |
+        if [ ! -f "data/All_Configs_base64_Sub.txt" ]; then
+          echo "❌ subscription file missing"
+          exit 1
+        fi
+        SUB_LINK=$(cat data/All_Configs_base64_Sub.txt)
+        echo "sub_link=$SUB_LINK" >> $GITHUB_OUTPUT
+
+    # -------------------------------------------
+    # 运行 Go 程序
+    # -------------------------------------------
+    - name: Run Go speedtest.go
+      env:
+        SUB_LINK: ${{ steps.subfile.outputs.sub_link }}
+      run: |
+        echo "🏁 Running Go speedtest..."
+        cd Files
+        go mod tidy
+        go run speedtest.go > ../data/go_result.txt
+        echo "Go speedtest finished."
+
     - name: Check if data directory exists
       id: check-data
       run: |
