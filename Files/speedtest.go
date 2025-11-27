@@ -28,13 +28,13 @@ func main() {
         SpeedTestMode: "pingonly",
         PingMethod:    "googleping",
         SortMethod:    "rspeed",
-        Concurrency:   4,
+        Concurrency:   16,
         TestMode:      2,
         Language:      "en",
         FontSize:      24,
         Theme:         "rainbow",
         Unique:        true,
-        Timeout:       3 * time.Second,
+        Timeout:       0.5 * time.Second,
         OutputMode:    0,
     }
 
