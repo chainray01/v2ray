@@ -34,7 +34,7 @@ func main() {
         FontSize:      24,
         Theme:         "rainbow",
         Unique:        true,
-        Timeout:       0.5 * time.Second,
+        Timeout:       1 * time.Second,
         OutputMode:    0,
     }
 
