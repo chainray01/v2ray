@@ -3,7 +3,7 @@ import (
     "context"
     "fmt"
 	"time"
-    "github.com/xxf098/LiteSpeedTest/web"
+    "github.com/xxf098/lite-proxy/web"
 )
  //测速
  //https://github.com/mahdibland/V2RayAggregator
