@@ -49,17 +49,13 @@ jobs:
         echo "Running sort.py..."
         python sort.py
 
-    - name: Run Go speedtest.go
+    - name: Run Python speed test
       timeout-minutes: 10
-      env:
-        INPUT_FILE: ../data/trojan.txt
-        OUTPUT_FILE: ../data/trojan_test.txt
+      working-directory: Files
       run: |
-        echo "🏁 Running Go speedtest..."
-        cd Files
-        go mod tidy
-        go run speedtest.go
-        echo "Go speedtest finished."
+        echo "🏁 Running Python speed test..."
+        python ping_test.py ../data/ss.txt ../data/ss_tested.txt
+        echo "Speed test finished."
 
     - name: Check if data directory exists
       id: check-data
