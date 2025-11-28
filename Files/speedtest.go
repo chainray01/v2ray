@@ -55,8 +55,12 @@ func main() {
     }
     defer f.Close()
 
+    // 使用带超时的context
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+    defer cancel()
+
     // 使用异步方式测试
-    nodeChan, links, err := web.TestAsyncContext(context.Background(), opts)
+    nodeChan, links, err := web.TestAsyncContext(ctx, opts)
     if err != nil {
         panic(err)
     }
@@ -65,15 +69,24 @@ func main() {
     fmt.Printf("Total nodes to test: %d\n", count)
 
     // 接收测试结果
+    okCount := 0
     for i := 0; i < count; i++ {
-        node := <-nodeChan
-        if node.IsOk {
-            // 写入文件
-            _, _ = f.WriteString(node.Remarks + "\n")
-
+        select {
+        case node := <-nodeChan:
+            if node.IsOk {
+                okCount++
+                _, _ = f.WriteString(node.Remarks + "\n")
+            }
+            if (i+1)%50 == 0 || i+1 == count {
+                fmt.Printf("Progress: %d/%d tested, %d ok\n", i+1, count, okCount)
+            }
+        case <-ctx.Done():
+            fmt.Printf("Timeout reached. Tested: %d/%d, OK: %d\n", i, count, okCount)
+            goto done
         }
     }
 
+done:
     close(nodeChan)
-    fmt.Println("Test completed!")
+    fmt.Printf("Test completed! Total OK: %d/%d\n", okCount, count)
 }
