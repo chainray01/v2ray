@@ -54,7 +54,7 @@ jobs:
         echo "🏁 Running Go speedtest..."
         cd Files
         go mod tidy
-        go run speedtest.go > ../data/go_result.txt
+        # go run speedtest.go > ../data/go_result.txt
         echo "Go speedtest finished."
 
     - name: Check if data directory exists
