@@ -50,9 +50,10 @@ jobs:
         python sort.py
 
     - name: Run Go speedtest.go
+      timeout-minutes: 10
       env:
-        INPUT_FILE: ../data/ss.txt
-        OUTPUT_FILE: ../data/ss_test.txt
+        INPUT_FILE: ../data/trojan.txt
+        OUTPUT_FILE: ../data/trojan_test.txt
       run: |
         echo "🏁 Running Go speedtest..."
         cd Files
