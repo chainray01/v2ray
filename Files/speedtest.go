@@ -28,7 +28,7 @@ func main() {
         SpeedTestMode: "pingonly",
         PingMethod:    "googleping",
         SortMethod:    "rspeed",
-        Concurrency:   16,
+        Concurrency:   32,
         TestMode:      2,
         Language:      "en",
         FontSize:      24,
