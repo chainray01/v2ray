@@ -54,7 +54,7 @@ jobs:
       working-directory: Files
       run: |
         echo "🏁 Running Python speed test..."
-        python ping_test.py ../data/ss.txt ../data/ss_tested.txt
+        # python ping_test.py ../data/ss.txt ../data/ss_tested.txt
         echo "Speed test finished."
 
     - name: Check if data directory exists
