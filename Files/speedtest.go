@@ -10,8 +10,19 @@ import (
 )
 
 func main() {
+    // 从环境变量获取输入输出文件路径
+    inputFile := os.Getenv("INPUT_FILE")
+    if inputFile == "" {
+        inputFile = "../data/All_Configs_base64_Sub.txt" // 默认值
+    }
+    
+    outputFile := os.Getenv("OUTPUT_FILE")
+    if outputFile == "" {
+        outputFile = "../data/test_result.txt" // 默认值
+    }
+
     // 读取订阅链接
-    bytes, err := os.ReadFile("../data/All_Configs_base64_Sub.txt")
+    bytes, err := os.ReadFile(inputFile)
     if err != nil {
         panic(fmt.Sprintf("cannot read subscription file: %v", err))
     }
@@ -38,7 +49,7 @@ func main() {
     }
 
     // 打开文件写入
-    f, err := os.Create("../data/test_result.txt")
+    f, err := os.Create(outputFile)
     if err != nil {
         panic(fmt.Sprintf("cannot create output file: %v", err))
     }

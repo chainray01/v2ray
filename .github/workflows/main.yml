@@ -50,11 +50,14 @@ jobs:
         python sort.py
 
     - name: Run Go speedtest.go
+      env:
+        INPUT_FILE: ../data/ss.txt
+        OUTPUT_FILE: ../data/ss_test.txt
       run: |
         echo "🏁 Running Go speedtest..."
         cd Files
         go mod tidy
-        # go run speedtest.go > ../data/go_result.txt
+        go run speedtest.go
         echo "Go speedtest finished."
 
     - name: Check if data directory exists
