@@ -242,7 +242,7 @@ def filter_and_deduplicate_configs(source_contents, supported_protocols):
                 continue
 
             # Skip unwanted configs by keyword
-            if "Farah_VPN" in line:
+            if "Farah_VPN" in line or "PrivateVPNs" in line:
                 continue
 
             # header 行处理
