@@ -241,6 +241,10 @@ def filter_and_deduplicate_configs(source_contents, supported_protocols):
             if not line:
                 continue
 
+            # Skip unwanted configs by keyword
+            if "Farah_VPN" in line:
+                continue
+
             # header 行处理
             if line.startswith("#"):
                 if any(k in line for k in header_keywords):
